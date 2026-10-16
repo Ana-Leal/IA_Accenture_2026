@@ -1,73 +1,97 @@
 # Permite leer variables de entorno.
 import os
 
-# Permite enviar peticiones HTTP a Gemini.
+# Permite enviar peticiones HTTP.
 import requests
 
-# Importa la función que lee el archivo .env.
+# Permite cargar las variables del archivo .env.
 from dotenv import load_dotenv
 
-# Carga las variables guardadas en tu archivo .env.
+# Carga nuestra configuración.
 load_dotenv()
 
 
-# Define la función que recibirá una pregunta.
-def consultar_gemini(pregunta):
-
-    # Lee API_KEY desde el entorno y guarda su valor en api_key.
+# Prepara los datos necesarios para consultar Gemini.
+def armar_peticion(pregunta):
+    # Lee la clave desde el entorno.
     api_key = os.getenv("API_KEY")
+
+    # Conserva el modelo que ya utilizamos.
     modelo = "gemini-3.8-flash"
-    
-    # Construye la url a la que se enviará la pregunta
-    # La permite reemplazar el modelo por el valor de esa variable
-    # GenerateContent es la operacion que solicita generar una respuesta
-    url = (f"https://generativelanguage.googleapis.com/v1beta/"
+
+    # Construye la dirección del modelo.
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/"
         f"models/{modelo}:generateContent"
     )
-        # Crea un diccionario con los encabezados de la petición.
-    headers = {
-        # Indica que se enviará el contenido en formato JSON.
-        "Content-Type": "application/json",
 
-        # Envía la clave desde el archivo .env.
+    # Prepara el tipo de contenido y la autenticación.
+    headers = {
+        "Content-Type": "application/json",
         "x-goog-api-key": api_key
     }
 
-    # Crea el cuerpo de la petición con la estructura que espera Gemini.
+    # Organiza la pregunta con la estructura que espera Gemini.
     body = {
-        # contents contiene los mensajes que se envian al modelo.
         "contents": [
             {
-                # parts contiene las partes del mensaje.
                 "parts": [
-                    {
-                        # Usa la pregunta que recibió la función.
-                        "text": pregunta
-                    }
+                    {"text": pregunta}
                 ]
             }
         ]
     }
-     # Envía la petición POST a la URL de Gemini.
-    # headers lleva la clave y el tipo de contenido.
-    # json=body convierte el diccionario al formato JSON que enviaremos.
-    # timeout=60 limita la espera de respuesta para evitar esperar indefinidamente.
-    respuesta = requests.post(url, headers=headers, json=body, timeout=60)
 
-    # Convierte el cuerpo JSON de la respuesta en un diccionario de Python.
-    # Recorre la estructura de Gemini y devuelve el texto generado.
-    # [0] selecciona el primer elemento de cada lista.
-    datos = respuesta.json()
+    # Devuelve los tres elementos sin enviar ninguna petición.
+    return url, headers, body
+
+
+# Envía la petición y devuelve la respuesta como diccionario.
+def enviar_peticion(url, headers, body):
+   
+    respuesta = requests.post(
+        url,
+        headers=headers,
+        json=body,
+        timeout=60
+    )
+
+    # Conserva temporalmente el diagnóstico del estado HTTP.
+    print("Estado HTTP:", respuesta.status_code)
+
+    # Convierte el cuerpo JSON recibido en un diccionario.
+    return respuesta.json()
+
+
+# Extrae únicamente el texto generado.
+def extraer_texto(datos):
+    # Selecciona el primer candidato y la primera parte de su contenido.
     return datos["candidates"][0]["content"]["parts"][0]["text"]
-    
-    # Ejecuta esta prueba solo cuando se abre este archivo como programa principal.
-# Si después se importa desde otro archivo, la prueba no se ejecutará.
-if __name__ == "__main__":
 
-    # Llama a la función y guarda el texto que devuelve Gemini.
+
+# Coordina las tres funciones anteriores.
+def consultar_gemini(pregunta):
+    # Prepara la URL, los encabezados y el cuerpo.
+    url, headers, body = armar_peticion(pregunta)
+
+    # Envía la petición y obtiene el diccionario de respuesta.
+    datos = enviar_peticion(url, headers, body)
+
+    # Conserva temporalmente el diagnóstico de respuestas inesperadas.
+    if "candidates" not in datos:
+        print("Respuesta recibida:", datos)
+        return None
+
+    # Extrae el texto y lo devuelve.
+    return extraer_texto(datos)
+
+
+# Ejecuta la prueba solo cuando iniciamos este archivo directamente.
+if __name__ == "__main__":
+    # Llama a la función que coordina la consulta.
     resultado = consultar_gemini(
         "Confirma en una frase corta que esta conexión funciona."
     )
 
-    # Muestra el texto generado en la terminal.
+  
     print(resultado)
