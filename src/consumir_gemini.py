@@ -56,8 +56,8 @@ def enviar_peticion(url, headers, body):
         timeout=60
     )
 
-    # Conserva temporalmente el diagnóstico del estado HTTP.
-    print("Estado HTTP:", respuesta.status_code)
+    
+   
 
     # Convierte el cuerpo JSON recibido en un diccionario.
     return respuesta.json()
@@ -77,10 +77,6 @@ def consultar_gemini(pregunta):
     # Envía la petición y obtiene el diccionario de respuesta.
     datos = enviar_peticion(url, headers, body)
 
-    # Conserva temporalmente el diagnóstico de respuestas inesperadas.
-    if "candidates" not in datos:
-        print("Respuesta recibida:", datos)
-        return None
 
     # Extrae el texto y lo devuelve.
     return extraer_texto(datos)
