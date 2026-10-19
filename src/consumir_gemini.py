@@ -6,32 +6,44 @@ import requests
 
 # Permite cargar las variables del archivo .env.
 from dotenv import load_dotenv
-
-# Carga nuestra configuración.
+# Carga las variables del archivo .env.
 load_dotenv()
 
 
 # Prepara los datos necesarios para consultar Gemini.
 def armar_peticion(pregunta):
-    # Lee la clave desde el entorno.
+     # Comprueba que la pregunta sea un texto.
+    if not isinstance(pregunta, str):
+        # Informa que el tipo de dato recibido no es válido.
+        raise ValueError("La pregunta debe ser un texto.")
+
+    # Elimina los espacios al inicio y al final.
+    pregunta = pregunta.strip()
+
+    # Rechaza una pregunta vacía o que solo contenía espacios.
+    if not pregunta:
+        # Detiene la operación antes de enviar la petición.
+        raise ValueError("La pregunta no puede estar vacía.")
+
+    # Lee la clave desde la variable API_KEY del entorno.
     api_key = os.getenv("API_KEY")
 
-    # Conserva el modelo que ya utilizamos.
+    # Indica el modelo que ya utilizamos.
     modelo = "gemini-3.8-flash"
 
-    # Construye la dirección del modelo.
+    # Construye la dirección para solicitar una respuesta al modelo.
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/"
         f"models/{modelo}:generateContent"
     )
 
-    # Prepara el tipo de contenido y la autenticación.
+    # Prepara el formato del contenido y la autenticación.
     headers = {
         "Content-Type": "application/json",
         "x-goog-api-key": api_key
     }
 
-    # Organiza la pregunta con la estructura que espera Gemini.
+    # Coloca la pregunta validada en la estructura que espera Gemini.
     body = {
         "contents": [
             {
@@ -42,41 +54,82 @@ def armar_peticion(pregunta):
         ]
     }
 
-    # Devuelve los tres elementos sin enviar ninguna petición.
+    # Devuelve los datos preparados sin enviar todavía la petición.
     return url, headers, body
 
 
 # Envía la petición y devuelve la respuesta como diccionario.
 def enviar_peticion(url, headers, body):
-   
-    respuesta = requests.post(
-        url,
-        headers=headers,
-        json=body,
-        timeout=60
-    )
+    # Intenta enviar la petición y comprobar su estado HTTP.
+    try:
+        # Envía los datos a Gemini y limita el tiempo de espera.
+        respuesta = requests.post(
+            url,
+            headers=headers,
+            json=body,
+            timeout=60
+        )
 
-    
-   
+        # Genera un HTTPError si el servidor devuelve un error HTTP.
+        respuesta.raise_for_status()
 
-    # Convierte el cuerpo JSON recibido en un diccionario.
-    return respuesta.json()
+    # Captura cuando se supera el tiempo de espera.
+    # Comunica el problema a quien llamó a esta función.
+    except requests.exceptions.Timeout:
+
+    raise RuntimeError(
+        "El servicio tardó demasiado en responder. Intenta nuevamente."
+        ) from None
+
+    # Captura problemas al establecer o mantener la conexión.
+    except requests.exceptions.ConnectionError:
+        raise RuntimeError(
+            "No se pudo conectar con el servicio. Revisa tu conexión."
+        ) from None
+
+    # Captura respuestas HTTP de error, como 400, 403 o 503.
+    except requests.exceptions.HTTPError:
+        # Obtiene el código de estado de la respuesta.
+        codigo = respuesta.status_code
+
+        # Informa el estado sin mostrar la clave ni los encabezados.
+        raise RuntimeError(
+            f"El servicio rechazó la petición o no pudo atenderla "
+            f"(HTTP {codigo})."
+        ) from None
+
+    # Intenta convertir el contenido recibido a un diccionario.
+    try:
+        return respuesta.json()
+
+    # Captura una respuesta cuyo contenido no sea JSON válido.
+    except requests.exceptions.JSONDecodeError:
+        raise RuntimeError(
+            "La respuesta del servicio no llegó en formato JSON válido."
+        ) from None
 
 
 # Extrae únicamente el texto generado.
 def extraer_texto(datos):
-    # Selecciona el primer candidato y la primera parte de su contenido.
-    return datos["candidates"][0]["content"]["parts"][0]["text"]
+    # Intenta acceder al texto de la primera respuesta.
+    try:
+        return datos["candidates"][0]["content"]["parts"][0]["text"]
+
+    # Captura campos ausentes o listas sin el elemento esperado.
+    except (KeyError, IndexError):
+        # Informa que la respuesta no contiene el texto esperado.
+        raise RuntimeError(
+            "La respuesta no trae el texto generado en el lugar esperado."
+        ) from None
 
 
-# Coordina las tres funciones anteriores.
+# Coordina la preparación, el envío y la extracción.
 def consultar_gemini(pregunta):
     # Prepara la URL, los encabezados y el cuerpo.
     url, headers, body = armar_peticion(pregunta)
 
-    # Envía la petición y obtiene el diccionario de respuesta.
+    # Envía la petición y obtiene la respuesta como diccionario.
     datos = enviar_peticion(url, headers, body)
-
 
     # Extrae el texto y lo devuelve.
     return extraer_texto(datos)
@@ -84,10 +137,17 @@ def consultar_gemini(pregunta):
 
 # Ejecuta la prueba solo cuando iniciamos este archivo directamente.
 if __name__ == "__main__":
-    # Llama a la función que coordina la consulta.
-    resultado = consultar_gemini(
-        "Confirma en una frase corta que esta conexión funciona."
-    )
+    # Intenta completar la consulta.
+    try:
+        # Llama a la función que coordina la consulta.
+        resultado = consultar_gemini(
+            "Confirma en una frase corta que esta conexión funciona."
+        )
 
-  
-    print(resultado)
+        # Muestra el texto cuando la consulta termina correctamente.
+        print(resultado)
+
+    # Recibe los errores de validación y los errores controlados.
+    except (ValueError, RuntimeError) as error:
+        # Muestra el motivo del fallo sin un traceback.
+        print("No se pudo completar la operación:", error)
