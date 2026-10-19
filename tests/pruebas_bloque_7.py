@@ -72,4 +72,17 @@ comprobar_error(
     "La respuesta no trae el texto generado en el lugar esperado."
 )
 
+# Simula un timeout sin acceder a Internet.
+with patch(
+    "src.consumir_gemini.requests.post",
+    side_effect=requests.exceptions.Timeout("Timeout simulado")
+):
+    # Comprueba que el timeout produzca el mensaje esperado.
+    comprobar_error(
+        "Tiempo de espera agotado",
+        lambda: enviar_peticion("https://ejemplo.test", {}, {}),
+        "El servicio tardó demasiado en responder. Intenta nuevamente."
+    )
+
+# Este mensaje aparece únicamente si todas las pruebas anteriores pasan.
 print("\nTodas las pruebas controladas pasaron.")

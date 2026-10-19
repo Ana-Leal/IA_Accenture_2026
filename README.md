@@ -76,3 +76,5 @@ Estas capturas están dentro de `docs/evidencias_bloque7/`:
 - [Tiempo de espera controlado](docs/evidencias_bloque7/timeout01.png)
 - [Credencial inválida, pregunta vacía y consulta válida](docs/evidencias_bloque7/02_tres_pruebas.png)
 - [Pruebas locales de errores controlados](docs/evidencias_bloque7/03_errores_controlados.png)
+- [Commit y push del bloque 7](docs/evidencias_bloque7/04_commit_push.png)
+- [Pruebas locales con timeout simulado](docs/evidencias_bloque7/05_timeout_simulado.png)
