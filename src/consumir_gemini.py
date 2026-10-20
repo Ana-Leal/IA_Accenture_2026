@@ -122,6 +122,35 @@ def extraer_texto(datos):
             "La respuesta no trae el texto generado en el lugar esperado."
         ) from None
 
+# Calcula el costo usando los tokens registrados en la respuesta.
+# Los precios recibidos deben estar expresados por un solo token.
+def calcular_costo(datos, precio_entrada, precio_salida):
+    # Intenta obtener los conteos necesarios para calcular el costo.
+    try:
+        # Obtiene los metadatos de consumo de la respuesta.
+        uso = datos["usageMetadata"]
+
+        # Obtiene cuántos tokens se enviaron al modelo.
+        tokens_entrada = uso["promptTokenCount"]
+
+        # Obtiene cuántos tokens generó el modelo en su respuesta.
+        tokens_salida = uso["candidatesTokenCount"]
+
+    # Controla la ausencia de alguno de los campos necesarios.
+    except KeyError:
+        raise RuntimeError(
+            "La respuesta no contiene los datos de uso necesarios "
+            "para calcular el costo."
+        ) from None
+
+    # Multiplica los tokens enviados por su precio unitario.
+    costo_entrada = tokens_entrada * precio_entrada
+
+    # Multiplica los tokens generados por su precio unitario.
+    costo_salida = tokens_salida * precio_salida
+
+    # Devuelve la suma de ambos costos.
+    return costo_entrada + costo_salida
 
 # Coordina la preparación, el envío y la extracción.
 def consultar_gemini(pregunta):
