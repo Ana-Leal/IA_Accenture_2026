@@ -21,7 +21,8 @@ El archivo `.env` contiene credenciales y no debe subirse al repositorio.
 - `src/`: código fuente del proyecto.
 - `docs/`: documentación técnica y evidencias.
 - `docs/evidencias_bloque7/`: capturas de las pruebas del bloque 7.
-- `tests/`: pruebas del código.
+- `docs/evidencias_bloque8/`: diagrama del bloque 8 y documento de decisión de arquitectura del bloque 9.
+- `tests/`: pruebas locales y script de comparación de modelos.
 - `requirements.txt`: dependencias de Python.
 - `.env.example`: ejemplo de configuración sin credenciales reales.
 - `.gitignore`: excluye archivos como `.env`, el entorno virtual y archivos temporales.
@@ -60,14 +61,15 @@ Este comando realiza una petición real a Gemini.
 
 ### Ejecutar las pruebas locales
 
-Desde la raíz del repositorio:
+Desde la raíz del repositorio, con el entorno virtual activo:
 
 ```bash
 python tests/pruebas_bloque_7.py
 ```
 
-Estas pruebas simulan errores de conexión, JSON inválido,
-campos faltantes y listas vacías. No realizan llamadas a la API.
+Estas pruebas simulan errores de conexión, tiempo de espera,
+JSON inválido, campos faltantes y listas vacías.
+No realizan llamadas a la API.
 
 ### Evidencias del bloque 7
 
@@ -78,3 +80,60 @@ Estas capturas están dentro de `docs/evidencias_bloque7/`:
 - [Pruebas locales de errores controlados](docs/evidencias_bloque7/03_errores_controlados.png)
 - [Commit y push del bloque 7](docs/evidencias_bloque7/04_commit_push.png)
 - [Pruebas locales con timeout simulado](docs/evidencias_bloque7/05_timeout_simulado.png)
+
+## Bloque 8: arquitectura de la miniaplicación
+
+- [Ver diagrama de arquitectura](docs/evidencias_bloque8/diagrama_arquitectura_bloque8.png)
+
+El cálculo de costo se prueba con datos ficticios mediante:
+
+```bash
+python tests/pruebas_bloque_8.py
+```
+
+Estas pruebas comprueban el costo del ejemplo, el efecto de duplicar
+los precios y el manejo de datos de uso faltantes.
+No realizan llamadas a la API.
+
+## Bloque 9: comparación y elección del modelo
+
+- [Ver comparación, resultados y decisión de arquitectura](docs/evidencias_bloque8/decision-arquitectura.md)
+
+Se seleccionó Gemini 3.5 Flash-Lite como modelo predeterminado
+para el prototipo. El documento explica los resultados,
+las incidencias y las limitaciones de la evaluación.
+
+El documento está junto al diagrama del bloque 8, que se conserva
+como referencia de la arquitectura utilizada en la comparación.
+
+### Ejecutar la comparación
+
+El script `tests/comparar_modelos_bloque_9.py` realiza llamadas
+reales a la API para los modelos configurados en su lista `modelos`.
+
+Actualmente esa lista contiene Gemini 3.6 Flash, utilizado como
+candidato alternativo. Los resultados anteriores de Gemini 3.5
+Flash-Lite y Gemini 3.8 Flash se conservan en el documento de decisión.
+
+Desde la raíz del repositorio, con el entorno virtual activo,
+las dependencias instaladas y `API_KEY` configurada, ejecuta:
+
+```bash
+python -u tests/comparar_modelos_bloque_9.py
+```
+
+El script realiza cuatro intentos de la consulta del lavaplatos
+y una consulta para cada uno de los otros dos casos: mueble y humedad.
+Imprime el promedio de latencia si los cuatro primeros intentos
+son exitosos y registra los fallos por separado.
+
+### Repetir únicamente la consulta del mueble
+
+Para consultar el caso del mueble con Gemini 3.6 Flash:
+
+```bash
+python -u tests/comparar_modelos_bloque_9.py --solo-mueble
+```
+
+Esta opción realiza una sola petición real y no ejecuta
+las demás consultas.

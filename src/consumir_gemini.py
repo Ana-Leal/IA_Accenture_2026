@@ -12,7 +12,7 @@ load_dotenv()
 
 
 # Prepara los datos necesarios para consultar Gemini.
-def armar_peticion(pregunta):
+def armar_peticion(pregunta, modelo="gemini-3.5-flash-lite"):
     # Comprueba que la pregunta sea un texto.
     if not isinstance(pregunta, str):
         # Informa que el tipo de dato no es válido.
@@ -29,8 +29,6 @@ def armar_peticion(pregunta):
     # Lee la clave desde la variable API_KEY del entorno.
     api_key = os.getenv("API_KEY")
 
-    # Indica el modelo que ya utilizamos.
-    modelo = "gemini-3.8-flash"
 
     # Construye la dirección para consultar al modelo.
     url = (
