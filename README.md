@@ -137,3 +137,23 @@ python -u tests/comparar_modelos_bloque_9.py --solo-mueble
 
 Esta opción realiza una sola petición real y no ejecuta
 las demás consultas.
+
+## Iniciar la aplicación
+
+Desde la raíz del repositorio, con las dependencias instaladas y
+la variable `API_KEY` configurada en `.env`:
+
+En Git Bash de Windows, activa el entorno virtual:
+
+```bash
+source venv/Scripts/activate
+```
+
+Ejecuta la aplicación:
+
+```bash
+python main.py
+```
+
+Escribe tu necesidad y presiona Enter. La aplicación realizará
+una consulta real a Gemini y mostrará la respuesta.
