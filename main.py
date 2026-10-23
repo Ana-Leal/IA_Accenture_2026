@@ -1,16 +1,20 @@
-# Permite medir el tiempo de la petición.
+# Permite mostrar el JSON validado y medir la petición.
+import json
 from time import perf_counter
+
+# Reutiliza el banco de prompts existente.
+from prompts.banco import BANCO_DE_PROMPTS
 
 # Reutiliza las funciones existentes del proyecto.
 from src.consumir_gemini import (
     armar_peticion,
     enviar_peticion,
     extraer_texto,
+    parsear_respuesta_json,
     calcular_costo,
 )
 
-# Tarifas de referencia documentadas para Gemini 3.5 Flash-Lite.
-# Están expresadas en USD por un token.
+# Tarifas de referencia documentadas, en USD por token.
 PRECIO_ENTRADA = 0.30 / 1_000_000
 PRECIO_SALIDA = 2.50 / 1_000_000
 
@@ -20,22 +24,38 @@ def main():
     pregunta = input("Describe qué necesitas resolver: ")
 
     try:
-        # Prepara la consulta usando el modelo predeterminado.
-        url, headers, body = armar_peticion(pregunta)
+        # Selecciona el prompt existente para identificar el oficio.
+        prompt = next(
+            elemento
+            for elemento in BANCO_DE_PROMPTS
+            if elemento["nombre"] == "identificar_oficio"
+        )
+
+        # Envía las instrucciones separadas de la pregunta del usuario.
+        url, headers, body = armar_peticion(
+            pregunta,
+            system_instruction=prompt["system_instruction"],
+            response_schema=prompt["response_schema"],
+        )
 
         # Mide el envío y la recepción de la respuesta.
         inicio = perf_counter()
         datos = enviar_peticion(url, headers, body)
         duracion = perf_counter() - inicio
 
-        # Extrae y muestra el texto generado.
+        # Extrae el texto y valida sus campos y tipos.
         texto = extraer_texto(datos)
-        print("\nRespuesta:")
-        print(texto)
+        resultado = parsear_respuesta_json(
+            texto,
+            tipos_esperados=prompt["tipos_esperados"],
+        )
+
+        # Muestra únicamente el resultado que superó la validación.
+        print("\nRespuesta JSON validada:")
+        print(json.dumps(resultado, ensure_ascii=False, indent=2))
         print(f"\nTiempo de respuesta: {duracion:.2f} segundos")
 
-        # Obtiene los datos de consumo sin perder la respuesta
-        # si el servicio no incluye estos campos.
+        # Conserva la respuesta aunque falten los datos de consumo.
         try:
             uso = datos["usageMetadata"]
             tokens_entrada = uso["promptTokenCount"]
@@ -54,8 +74,7 @@ def main():
             # La tarifa de salida incluye respuesta y razonamiento.
             tokens_salida = tokens_respuesta + tokens_razonamiento
 
-            # Prepara una copia para reutilizar calcular_costo().
-            # No modifica los datos originales recibidos de Gemini.
+            # Reutiliza calcular_costo sin modificar la respuesta original.
             datos_costo = {
                 "usageMetadata": {
                     "promptTokenCount": tokens_entrada,
@@ -81,7 +100,7 @@ def main():
                 "faltan datos de uso válidos."
             )
 
-    # Muestra los fallos controlados por el módulo existente.
+    # Muestra los errores de validación y del servicio.
     except (ValueError, RuntimeError) as error:
         print("No se pudo completar la operación:", error)
 

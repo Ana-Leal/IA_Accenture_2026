@@ -1,36 +1,166 @@
-# Plantilla de repositorio base — Especialización en Desarrollo con IA Generativa (Accenture)
+# Miniaplicación de orientación de oficios — Accenture / Skillnest
 
-Esta es la estructura base del proyecto, que se amplía bloque a bloque hasta llegar a la aplicación completa del Gate 3.
+La aplicación interpreta una necesidad descrita por el usuario e identifica
+el tipo de trabajador adecuado. Utiliza Gemini y devuelve una respuesta
+JSON validada con los campos `oficio` y `motivo`.
 
-## Cómo empezar
+El proyecto se desarrolla progresivamente durante la Especialización
+en Desarrollo con IA Generativa.
 
-1. Crea un entorno virtual de Python y actívalo.
-2. Instala las dependencias:
+## Requisitos
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+- Python y Git instalados.
+- Una clave de Gemini API.
+- Conexión a Internet para las consultas reales.
+- Entorno probado por la autora: Windows, Git Bash y Python 3.14.8.
 
-3. Copia `.env.example` a un archivo llamado `.env`.
-4. Configura tu credencial en la variable `API_KEY` del archivo `.env`.
+## Instalación desde cero
 
-El archivo `.env` contiene credenciales y no debe subirse al repositorio.
+Los siguientes comandos corresponden a Git Bash de Windows.
 
-## Estructura de carpetas
+### 1. Clonar y entrar al repositorio
 
-- `src/`: código fuente del proyecto.
-- `docs/`: documentación técnica y evidencias.
-- `docs/evidencias_bloque7/`: capturas de las pruebas del bloque 7.
-- `docs/evidencias_bloque8/`: diagrama del bloque 8 y documento de decisión de arquitectura del bloque 9.
-- `tests/`: pruebas locales y script de comparación de modelos.
-- `requirements.txt`: dependencias de Python.
-- `.env.example`: ejemplo de configuración sin credenciales reales.
-- `.gitignore`: excluye archivos como `.env`, el entorno virtual y archivos temporales.
+```bash
+git clone https://github.com/Ana-Leal/IA_Accenture_2026.git
+cd IA_Accenture_2026
+```
 
-## Reglas del proyecto
+Todos los comandos siguientes se ejecutan desde esta carpeta,
+donde están `main.py` y `requirements.txt`.
 
-- No incluir contraseñas, llaves de API ni tokens en los archivos que se suben.
-- Mantener un entorno virtual propio para el proyecto.
+Si descargaste un ZIP, extráelo y abre la terminal en la carpeta
+que contiene esos dos archivos.
+
+### 2. Crear y activar el entorno virtual
+
+```bash
+python -m venv venv
+source venv/Scripts/activate
+```
+
+El indicador `(venv)` debe aparecer en la terminal.
+
+### 3. Instalar las dependencias
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 4. Configurar la credencial
+
+```bash
+cp .env.example .env
+```
+
+Abre `.env` en el editor y configura tu clave:
+
+```dotenv
+API_KEY=tu_clave_real
+```
+
+Guarda el archivo en la misma carpeta que `main.py`.
+No compartas su contenido ni lo subas a GitHub.
+
+## Ejecutar la aplicación
+
+Con el entorno virtual activo:
+
+```bash
+python main.py
+```
+
+Cuando aparezca `Describe qué necesitas resolver:`, escribe una necesidad
+y presiona Enter. Por ejemplo:
+
+```text
+La llave del lavaplatos gotea incluso cuando la cierro. ¿Qué tipo de trabajador necesito?
+```
+
+La aplicación:
+
+1. Selecciona `identificar_oficio` del banco de prompts.
+2. Envía las instrucciones de sistema separadas de la pregunta.
+3. Solicita una respuesta con esquema JSON.
+4. Valida los campos y tipos recibidos.
+5. Muestra la respuesta, el tiempo, los tokens y el costo estimado.
+
+Ejemplo de una respuesta real validada:
+
+```json
+{
+  "oficio": "Gasfíter",
+  "motivo": "Para revisar y reparar la llave que gotea."
+}
+```
+
+El modelo predeterminado es `gemini-3.5-flash-lite`.
+
+### Activar el entorno en otra sesión
+
+Si cerraste la terminal, vuelve a abrirla en la raíz del proyecto y ejecuta:
+
+```bash
+source venv/Scripts/activate
+python main.py
+```
+
+Si aparece `ModuleNotFoundError: No module named 'requests'`, comprueba
+que el entorno esté activo y que hayas instalado las dependencias en él.
+
+## Alcance y limitaciones
+
+- Orienta sobre el tipo de trabajador; no contrata ni contacta profesionales.
+- No verifica disponibilidad, certificaciones ni precios de trabajadores.
+- No diagnostica con certeza la causa de una avería.
+- Si falta información, el prompt indica devolver `por determinar`
+  y explicar qué información falta.
+- La aplicación principal usa el prompt `identificar_oficio`.
+  Los otros dos prompts se evalúan mediante el script de consistencia.
+- La validación JSON comprueba estructura y tipos, no garantiza
+  que toda respuesta sea correcta.
+- Las consultas dependen de la disponibilidad y los límites de la API.
+- Los errores controlados se muestran como mensajes; no equivalen
+  a una consulta exitosa.
+
+### Tiempo, tokens y costo
+
+El tiempo mostrado corresponde al envío de la petición y la recepción
+de la respuesta convertida desde JSON.
+
+El costo usa las tarifas de referencia documentadas para el modelo:
+
+- Entrada: USD 0.30 por 1.000.000 de tokens.
+- Salida: USD 2.50 por 1.000.000 de tokens.
+
+Para la salida se suman los tokens de respuesta y de razonamiento.
+La estimación no implica un cobro en el nivel gratuito ni sustituye
+la facturación del proveedor. Las tarifas pueden cambiar.
+
+Si faltan datos de consumo válidos, se conserva la respuesta y se informa
+que no fue posible calcular el consumo y el costo.
+
+## Estructura del proyecto
+
+- `main.py`: punto de entrada de la aplicación.
+- `src/consumir_gemini.py`: preparación y envío de peticiones,
+  extracción del texto, validación JSON y cálculo de costo.
+- `prompts/banco.py`: instrucciones, ejemplos y esquemas de los prompts.
+- `prompts/test_consistencia.py`: evaluación mediante consultas reales.
+- `prompts/registro_resultados.json`: registro de la evaluación realizada.
+- `tests/`: pruebas locales y comparación de modelos.
+- `docs/`: documentación y evidencias.
+- `docs/evidencias_bloque7/`: capturas de validación y manejo de errores.
+- `docs/evidencias_bloque8/`: diagrama del bloque 8 y decisión del bloque 9.
+- `requirements.txt`: dependencias del proyecto.
+- `.env.example`: plantilla de configuración sin credenciales reales.
+- `.gitignore`: exclusiones de Git, como `.env` y el entorno virtual.
+- `prompts/`: banco de prompts de sistema, esquemas JSON, pruebas de consistencia y registro de resultados.
+
+## Seguridad y versionamiento
+
+- No incluir claves, contraseñas ni tokens en los archivos publicados.
+- Mantener `.env` excluido mediante `.gitignore`.
+- Utilizar un entorno virtual propio para el proyecto.
 - Registrar los avances mediante commits y subirlos a GitHub.
 
 ## Evidencias de la primera petición autenticada
@@ -43,138 +173,97 @@ Estas evidencias están directamente dentro de `docs/`:
 
 ## Bloque 7: validación y manejo de errores
 
-El módulo `src/consumir_gemini.py` valida la pregunta antes de enviarla
-y maneja errores de conexión, tiempo de espera, estado HTTP,
-JSON inválido y campos o elementos faltantes en la respuesta.
+El módulo valida la pregunta y controla errores de conexión,
+tiempo de espera, estado HTTP, JSON inválido y campos o elementos
+faltantes en la estructura esperada.
 
-### Ejecutar la consulta real
-
-Con el entorno virtual activo, las dependencias instaladas y
-la variable `API_KEY` configurada en `.env`, ejecuta desde la raíz
-del repositorio:
-
-```bash
-python src/consumir_gemini.py
-```
-
-Este comando realiza una petición real a Gemini.
-
-### Ejecutar las pruebas locales
-
-Desde la raíz del repositorio, con el entorno virtual activo:
+### Pruebas locales
 
 ```bash
 python tests/pruebas_bloque_7.py
 ```
 
-Estas pruebas simulan errores de conexión, tiempo de espera,
-JSON inválido, campos faltantes y listas vacías.
-No realizan llamadas a la API.
+Simulan errores de conexión, timeout, JSON inválido, campos faltantes
+y listas vacías. No realizan llamadas a la API.
 
-### Evidencias del bloque 7
+### Prueba directa del módulo
 
-Estas capturas están dentro de `docs/evidencias_bloque7/`:
+```bash
+python src/consumir_gemini.py
+```
+
+Realiza una consulta real de conexión. Es una prueba auxiliar;
+el punto de entrada de la aplicación es `main.py`.
+
+### Evidencias
 
 - [Tiempo de espera controlado](docs/evidencias_bloque7/timeout01.png)
 - [Credencial inválida, pregunta vacía y consulta válida](docs/evidencias_bloque7/02_tres_pruebas.png)
-- [Pruebas locales de errores controlados](docs/evidencias_bloque7/03_errores_controlados.png)
-- [Commit y push del bloque 7](docs/evidencias_bloque7/04_commit_push.png)
-- [Pruebas locales con timeout simulado](docs/evidencias_bloque7/05_timeout_simulado.png)
+- [Errores controlados](docs/evidencias_bloque7/03_errores_controlados.png)
+- [Commit y push](docs/evidencias_bloque7/04_commit_push.png)
+- [Timeout simulado](docs/evidencias_bloque7/05_timeout_simulado.png)
 
-## Bloque 8: arquitectura de la miniaplicación
+## Bloque 8: arquitectura y cálculo de costo
 
-- [Ver diagrama de arquitectura](docs/evidencias_bloque8/diagrama_arquitectura_bloque8.png)
+- [Diagrama de arquitectura del bloque 8](docs/evidencias_bloque8/diagrama_arquitectura_bloque8.png)
 
-El cálculo de costo se prueba con datos ficticios mediante:
+El diagrama conserva la implementación de esa etapa.
+El flujo actual de `main.py`, con prompt y validación JSON,
+está descrito en la sección de ejecución.
 
 ```bash
 python tests/pruebas_bloque_8.py
 ```
 
-Estas pruebas comprueban el costo del ejemplo, el efecto de duplicar
-los precios y el manejo de datos de uso faltantes.
+Estas pruebas utilizan datos y precios ficticios para comprobar
+el cálculo, la duplicación de precios y la ausencia de datos de uso.
 No realizan llamadas a la API.
 
 ## Bloque 9: comparación y elección del modelo
 
-- [Ver comparación, resultados y decisión de arquitectura](docs/evidencias_bloque8/decision-arquitectura.md)
+- [Comparación, resultados y decisión de arquitectura](docs/evidencias_bloque8/decision-arquitectura.md)
 
-Se seleccionó Gemini 3.5 Flash-Lite como modelo predeterminado
-para el prototipo. El documento explica los resultados,
-las incidencias y las limitaciones de la evaluación.
-
-El documento está junto al diagrama del bloque 8, que se conserva
-como referencia de la arquitectura utilizada en la comparación.
+Se seleccionó Gemini 3.5 Flash-Lite para el prototipo.
+El documento registra resultados, incidencias y limitaciones.
 
 ### Ejecutar la comparación
-
-El script `tests/comparar_modelos_bloque_9.py` realiza llamadas
-reales a la API para los modelos configurados en su lista `modelos`.
-
-Actualmente esa lista contiene Gemini 3.6 Flash, utilizado como
-candidato alternativo. Los resultados anteriores de Gemini 3.5
-Flash-Lite y Gemini 3.8 Flash se conservan en el documento de decisión.
-
-Desde la raíz del repositorio, con el entorno virtual activo,
-las dependencias instaladas y `API_KEY` configurada, ejecuta:
 
 ```bash
 python -u tests/comparar_modelos_bloque_9.py
 ```
 
-El script realiza cuatro intentos de la consulta del lavaplatos
-y una consulta para cada uno de los otros dos casos: mueble y humedad.
-Imprime el promedio de latencia si los cuatro primeros intentos
-son exitosos y registra los fallos por separado.
+Este script realiza consultas reales a los modelos de su lista `modelos`.
+Actualmente contiene Gemini 3.6 Flash como candidato alternativo.
+Los resultados anteriores de los otros modelos se conservan
+en el documento de decisión.
 
-### Repetir únicamente la consulta del mueble
+Realiza cuatro intentos de la consulta del lavaplatos y una consulta
+para cada caso adicional: mueble y humedad. Solo imprime el promedio
+de latencia si los cuatro primeros intentos son exitosos.
 
-Para consultar el caso del mueble con Gemini 3.6 Flash:
+Para repetir únicamente el caso del mueble con Gemini 3.6 Flash:
 
 ```bash
 python -u tests/comparar_modelos_bloque_9.py --solo-mueble
 ```
 
-Esta opción realiza una sola petición real y no ejecuta
-las demás consultas.
-
-## Iniciar la aplicación
-
-Desde la raíz del repositorio, con las dependencias instaladas y
-la variable `API_KEY` configurada en `.env`:
-
-En Git Bash de Windows, activa el entorno virtual:
-
-```bash
-source venv/Scripts/activate
-```
-
-Ejecuta la aplicación:
-
-```bash
-python main.py
-```
-
-Escribe tu necesidad y presiona Enter. La aplicación realizará
-una consulta real a Gemini y mostrará la respuesta.
-
 ## Bloque 10: banco de prompts y respuestas JSON
 
-El módulo permite enviar instrucciones de sistema separadas de la
-entrada del usuario, solicitar un esquema JSON y validar las claves
-y los tipos de la respuesta.
+El módulo admite instrucciones de sistema separadas del mensaje
+del usuario, un esquema JSON y validación local de campos y tipos.
 
-- Banco de prompts: [prompts/banco.py](prompts/banco.py).
-- Script de consistencia: [prompts/test_consistencia.py](prompts/test_consistencia.py).
-- Resultados reales: [prompts/registro_resultados.json](prompts/registro_resultados.json).
+- [Banco de prompts](prompts/banco.py)
+- [Script de consistencia](prompts/test_consistencia.py)
+- [Resultados reales registrados](prompts/registro_resultados.json)
 
-Con el entorno virtual activo y `API_KEY` configurada en `.env`:
+### Ejecutar la evaluación
 
 ```bash
 python -u prompts/test_consistencia.py
 ```
 
-Este comando realiza nueve consultas reales: tres por cada prompt.
+Realiza nueve consultas reales: tres por cada prompt.
+No es necesario ejecutar esta evaluación para iniciar la aplicación.
 
 ### Resultados del 22 de octubre de 2026 — hora de Chile
 
@@ -184,13 +273,53 @@ Este comando realiza nueve consultas reales: tres por cada prompt.
 | resumir_necesidad | 3/3 | 0 |
 | aclarar_necesidad | 3/3 | 0 |
 
-La revisión del contenido confirmó que se identificó el oficio,
-se resumió la necesidad sin agregar datos y se solicitaron
-aclaraciones ante la humedad de origen desconocido.
+La revisión confirmó la identificación del oficio, el resumen de la necesidad
+sin agregar datos y la solicitud de aclaraciones ante humedad de origen
+desconocido.
 
-Como observación, una aclaración mencionó al pintor entre posibles
-oficios, lo que reduce la precisión de esa orientación.
+Una aclaración mencionó al pintor entre posibles oficios, lo que reduce
+la precisión de esa orientación.
 
-Estos resultados describen las nueve consultas realizadas; no
-garantizan el mismo comportamiento para cualquier entrada.
+Estos resultados corresponden a las nueve consultas registradas;
+no garantizan el mismo comportamiento para cualquier entrada.
 El registro conserva la fecha en UTC.
+
+## Bloque 11 / Gate 1: verificación realizada
+
+El 23 de octubre de 2026 se probó una copia descargada desde GitHub
+en una carpeta separada, con un entorno virtual recién creado.
+
+- Las dependencias de `requirements.txt` se instalaron correctamente.
+- Las pruebas locales de los bloques 7 y 8 pasaron.
+- Se integró en `main.py` el prompt `identificar_oficio` y la validación JSON.
+- La ejecución principal obtuvo una respuesta real y validada.
+
+En esa prueba, el entorno virtual se creó en la carpeta superior
+a la del código y se activó desde la carpeta del proyecto con:
+
+```bash
+source ../venv/Scripts/activate
+```
+
+Esta ubicación corresponde únicamente a esa prueba.
+La instalación recomendada al inicio del README crea `venv`
+dentro de la raíz del proyecto.
+
+### Resultado observado
+
+| Dato | Resultado |
+|---|---|
+| Consulta | Llave del lavaplatos que gotea |
+| Oficio | Gasfíter |
+| Tiempo | 5.08 segundos |
+| Tokens de entrada | 150 |
+| Tokens de respuesta | 32 |
+| Tokens de razonamiento | 0 |
+| Costo estimado de referencia | USD 0.00012500 |
+
+Antes de la ejecución exitosa se recibieron errores HTTP 503.
+El mensaje del proveedor indicó alta demanda del modelo.
+La aplicación mostró los errores de forma controlada.
+
+La ejecución exitosa demuestra el funcionamiento observado en esa prueba;
+no garantiza disponibilidad permanente del servicio.
