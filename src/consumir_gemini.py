@@ -1,6 +1,12 @@
 # Permite leer variables de entorno.
 import os
 
+# Permite interpretar el JSON generado por el modelo.
+import json
+
+# Permite quitar las marcas de un bloque de código Markdown.
+import re
+
 # Permite enviar peticiones HTTP.
 import requests
 
@@ -12,7 +18,13 @@ load_dotenv()
 
 
 # Prepara los datos necesarios para consultar Gemini.
-def armar_peticion(pregunta, modelo="gemini-3.5-flash-lite"):
+def armar_peticion(
+    pregunta,
+    modelo="gemini-3.5-flash-lite",
+    *,
+    system_instruction=None,
+    response_schema=None,
+):
     # Comprueba que la pregunta sea un texto.
     if not isinstance(pregunta, str):
         # Informa que el tipo de dato no es válido.
@@ -52,6 +64,24 @@ def armar_peticion(pregunta, modelo="gemini-3.5-flash-lite"):
             }
         ]
     }
+
+    # Agrega las instrucciones separadas del mensaje del usuario.
+    # Son opcionales para conservar las llamadas de los bloques anteriores.
+    if system_instruction is not None:
+        if not isinstance(system_instruction, str) or not system_instruction.strip():
+            raise ValueError("Las instrucciones de sistema deben ser un texto no vacío.")
+        body["systemInstruction"] = {
+            "parts": [{"text": system_instruction.strip()}]
+        }
+
+    # Solicita JSON con el esquema indicado cuando el llamador lo proporciona.
+    if response_schema is not None:
+        if not isinstance(response_schema, dict) or not response_schema:
+            raise ValueError("El esquema de respuesta debe ser un diccionario no vacío.")
+        body["generationConfig"] = {
+            "responseMimeType": "application/json",
+            "responseSchema": response_schema,
+        }
 
     # Devuelve los datos preparados sin enviar la petición.
     return url, headers, body
@@ -119,6 +149,44 @@ def extraer_texto(datos):
         raise RuntimeError(
             "La respuesta no trae el texto generado en el lugar esperado."
         ) from None
+
+# Convierte el texto generado en un objeto JSON y valida sus campos.
+# tipos_esperados es un diccionario como {"oficio": str, "motivo": str}.
+def parsear_respuesta_json(texto, tipos_esperados=None):
+    if not isinstance(texto, str) or not texto.strip():
+        raise ValueError("La respuesta del modelo no contiene texto JSON.")
+
+    # Acepta JSON directo o un único bloque Markdown que lo envuelva.
+    contenido = texto.strip()
+    bloque = re.fullmatch(r"```(?:json)?\s*\n?(.*?)\s*```", contenido, re.DOTALL | re.IGNORECASE)
+    if bloque:
+        contenido = bloque.group(1).strip()
+
+    # Rechaza valores como NaN e Infinity, que no pertenecen al JSON estándar.
+    def rechazar_constante(valor):
+        raise ValueError("La respuesta contiene un valor que no es JSON válido.")
+
+    try:
+        datos = json.loads(contenido, parse_constant=rechazar_constante)
+    except json.JSONDecodeError:
+        raise ValueError("La respuesta del modelo no es JSON válido.") from None
+
+    # El banco de prompts utilizará objetos con campos identificados por nombre.
+    if not isinstance(datos, dict):
+        raise ValueError("La respuesta JSON debe ser un objeto.")
+
+    # Comprueba las claves obligatorias y sus tipos, si se han indicado.
+    if tipos_esperados is not None:
+        for clave, tipo in tipos_esperados.items():
+            if clave not in datos:
+                raise ValueError(f"La respuesta JSON no contiene el campo '{clave}'.")
+            # La comprobación exacta evita aceptar True como un número entero.
+            tipos = tipo if isinstance(tipo, tuple) else (tipo,)
+            if type(datos[clave]) not in tipos:
+                raise ValueError(f"El campo '{clave}' tiene un tipo incorrecto.")
+
+    return datos
+
 
 # Calcula el costo usando los tokens registrados en la respuesta.
 # Los precios recibidos deben estar expresados por un solo token.

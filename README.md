@@ -157,3 +157,40 @@ python main.py
 
 Escribe tu necesidad y presiona Enter. La aplicación realizará
 una consulta real a Gemini y mostrará la respuesta.
+
+## Bloque 10: banco de prompts y respuestas JSON
+
+El módulo permite enviar instrucciones de sistema separadas de la
+entrada del usuario, solicitar un esquema JSON y validar las claves
+y los tipos de la respuesta.
+
+- Banco de prompts: [prompts/banco.py](prompts/banco.py).
+- Script de consistencia: [prompts/test_consistencia.py](prompts/test_consistencia.py).
+- Resultados reales: [prompts/registro_resultados.json](prompts/registro_resultados.json).
+
+Con el entorno virtual activo y `API_KEY` configurada en `.env`:
+
+```bash
+python -u prompts/test_consistencia.py
+```
+
+Este comando realiza nueve consultas reales: tres por cada prompt.
+
+### Resultados del 22 de octubre de 2026 — hora de Chile
+
+| Prompt | Respuestas válidas | Fallos |
+|---|---:|---:|
+| identificar_oficio | 3/3 | 0 |
+| resumir_necesidad | 3/3 | 0 |
+| aclarar_necesidad | 3/3 | 0 |
+
+La revisión del contenido confirmó que se identificó el oficio,
+se resumió la necesidad sin agregar datos y se solicitaron
+aclaraciones ante la humedad de origen desconocido.
+
+Como observación, una aclaración mencionó al pintor entre posibles
+oficios, lo que reduce la precisión de esa orientación.
+
+Estos resultados describen las nueve consultas realizadas; no
+garantizan el mismo comportamiento para cualquier entrada.
+El registro conserva la fecha en UTC.
