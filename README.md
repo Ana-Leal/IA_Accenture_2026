@@ -323,3 +323,14 @@ La aplicación mostró los errores de forma controlada.
 
 La ejecución exitosa demuestra el funcionamiento observado en esa prueba;
 no garantiza disponibilidad permanente del servicio.
+
+### Verificación final desde un clon limpio — 23 de octubre de 2026
+
+Se verificó el commit `6e06ce9` en una carpeta independiente,
+con un entorno virtual nuevo y las dependencias instaladas
+desde `requirements.txt`. Se configuró localmente `.env`.
+
+La ejecución de `python main.py` finalizó correctamente:
+devolvió JSON validado con el oficio Gasfíter, tardó 1.29 segundos
+y registró 150 tokens de entrada, 32 de respuesta y 0 de razonamiento.
+El costo estimado de referencia fue USD 0.00012500.
