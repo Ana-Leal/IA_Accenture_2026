@@ -334,3 +334,45 @@ La ejecución de `python main.py` finalizó correctamente:
 devolvió JSON validado con el oficio Gasfíter, tardó 1.29 segundos
 y registró 150 tokens de entrada, 32 de respuesta y 0 de razonamiento.
 El costo estimado de referencia fue USD 0.00012500.
+## Bloque 12: cliente modular con reintentos
+
+`src/cliente.py` reúne la consulta al modelo mediante
+`consultar_modelo()`. La aplicación se inicia con:
+
+```bash
+python main.py
+```
+
+El cliente reutiliza las funciones de `src/consumir_gemini.py`
+y conserva la validación de la respuesta JSON.
+
+### Manejo de errores
+
+- Los errores de conexión, timeout, HTTP 429 y HTTP 5xx permiten
+  hasta tres intentos totales, con dos segundos entre intentos.
+- No se espera ni se vuelve a intentar después del tercer fallo.
+- Las credenciales ausentes o inválidas se informan sin reintentar.
+  Se reconocen HTTP 401, HTTP 403 y HTTP 400 con
+  el motivo `API_KEY_INVALID`.
+- Los demás errores HTTP y los errores de validación JSON
+  se informan sin reintentar.
+
+La aplicación muestra el tiempo total de la consulta y estima
+el costo de la respuesta recibida usando sus datos de consumo.
+La estimación no incluye posibles consumos de intentos fallidos
+cuyos datos de uso no se recibieron.
+
+### Pruebas locales
+
+Desde la raíz del repositorio, con el entorno virtual activo:
+
+```bash
+python tests/pruebas_bloque12.py
+```
+
+Estas pruebas simulan respuestas del proveedor y las esperas.
+No realizan llamadas a la API.
+
+Comprueban la recuperación ante HTTP 429 y 503, el agotamiento
+de los tres intentos y el rechazo de credenciales inválidas
+sin reintentos para HTTP 401, 403 y 400 con `API_KEY_INVALID`.

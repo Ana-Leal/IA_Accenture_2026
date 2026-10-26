@@ -1,59 +1,49 @@
-# Permite mostrar el JSON validado y medir la petición.
+# Permite mostrar el JSON y medir el tiempo de la consulta.
 import json
 from time import perf_counter
 
-# Reutiliza el banco de prompts existente.
+# Reutiliza las instrucciones y el esquema de respuesta.
 from prompts.banco import BANCO_DE_PROMPTS
 
-# Reutiliza las funciones existentes del proyecto.
-from src.consumir_gemini import (
-    armar_peticion,
-    enviar_peticion,
-    extraer_texto,
-    parsear_respuesta_json,
-    calcular_costo,
-)
+# El cliente coordina la consulta, los reintentos y la validación.
+from src.cliente import consultar_modelo
+
+# Conserva la función existente para calcular el costo.
+from src.consumir_gemini import calcular_costo
+
 
 # Tarifas de referencia documentadas, en USD por token.
 PRECIO_ENTRADA = 0.30 / 1_000_000
 PRECIO_SALIDA = 2.50 / 1_000_000
 
 
-# Inicia la aplicación y muestra la respuesta y su consumo.
 def main():
     pregunta = input("Describe qué necesitas resolver: ")
 
     try:
-        # Selecciona el prompt existente para identificar el oficio.
+        # Selecciona las instrucciones para identificar el oficio.
         prompt = next(
             elemento
             for elemento in BANCO_DE_PROMPTS
             if elemento["nombre"] == "identificar_oficio"
         )
 
-        # Envía las instrucciones separadas de la pregunta del usuario.
-        url, headers, body = armar_peticion(
+        # Mide la consulta completa, incluidas las esperas por reintentos.
+        inicio = perf_counter()
+
+        resultado, datos = consultar_modelo(
             pregunta,
             system_instruction=prompt["system_instruction"],
             response_schema=prompt["response_schema"],
-        )
-
-        # Mide el envío y la recepción de la respuesta.
-        inicio = perf_counter()
-        datos = enviar_peticion(url, headers, body)
-        duracion = perf_counter() - inicio
-
-        # Extrae el texto y valida sus campos y tipos.
-        texto = extraer_texto(datos)
-        resultado = parsear_respuesta_json(
-            texto,
             tipos_esperados=prompt["tipos_esperados"],
         )
 
-        # Muestra únicamente el resultado que superó la validación.
+        duracion = perf_counter() - inicio
+
+        # El cliente devuelve un resultado que ya superó la validación.
         print("\nRespuesta JSON validada:")
         print(json.dumps(resultado, ensure_ascii=False, indent=2))
-        print(f"\nTiempo de respuesta: {duracion:.2f} segundos")
+        print(f"\nTiempo total de la consulta: {duracion:.2f} segundos")
 
         # Conserva la respuesta aunque falten los datos de consumo.
         try:
@@ -71,10 +61,10 @@ def main():
             if any(type(valor) is not int or valor < 0 for valor in conteos):
                 raise ValueError("Conteos de tokens inválidos.")
 
-            # La tarifa de salida incluye respuesta y razonamiento.
+            # Incluye respuesta y razonamiento en los tokens de salida.
             tokens_salida = tokens_respuesta + tokens_razonamiento
 
-            # Reutiliza calcular_costo sin modificar la respuesta original.
+            # Reutiliza calcular_costo sin modificar los datos originales.
             datos_costo = {
                 "usageMetadata": {
                     "promptTokenCount": tokens_entrada,
@@ -91,8 +81,15 @@ def main():
             print(f"Tokens de entrada: {tokens_entrada}")
             print(f"Tokens de respuesta: {tokens_respuesta}")
             print(f"Tokens de razonamiento: {tokens_razonamiento}")
-            print(f"Costo estimado con tarifas de referencia: USD {costo:.8f}")
+            print(
+                "Costo estimado de la respuesta recibida "
+                f"con tarifas de referencia: USD {costo:.8f}"
+            )
             print("La estimación no implica un cobro en el nivel gratuito.")
+            print(
+                "No incluye posibles consumos de intentos fallidos "
+                "cuyos datos de uso no se recibieron."
+            )
 
         except (KeyError, TypeError, ValueError, RuntimeError):
             print(
@@ -100,11 +97,11 @@ def main():
                 "faltan datos de uso válidos."
             )
 
-    # Muestra los errores de validación y del servicio.
+    # El cliente comunica los errores con mensajes controlados.
     except (ValueError, RuntimeError) as error:
         print("No se pudo completar la operación:", error)
 
 
-# Ejecuta la aplicación solo al iniciar este archivo directamente.
+# Inicia la aplicación solo al ejecutar este archivo directamente.
 if __name__ == "__main__":
     main()

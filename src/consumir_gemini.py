@@ -4,16 +4,15 @@ import os
 # Permite interpretar el JSON generado por el modelo.
 import json
 
-# Permite quitar las marcas de un bloque de código Markdown.
+# Permite reconocer bloques de código Markdown.
 import re
 
 # Permite enviar peticiones HTTP.
 import requests
 
-# Importa la función que carga las variables del archivo .env.
+# Permite cargar las variables del archivo .env.
 from dotenv import load_dotenv
 
-# Carga las variables del archivo .env.
 load_dotenv()
 
 
@@ -27,20 +26,17 @@ def armar_peticion(
 ):
     # Comprueba que la pregunta sea un texto.
     if not isinstance(pregunta, str):
-        # Informa que el tipo de dato no es válido.
         raise ValueError("La pregunta debe ser un texto.")
 
     # Elimina espacios al inicio y al final.
     pregunta = pregunta.strip()
 
-    # Rechaza una pregunta vacía o que solo contenía espacios.
+    # Rechaza una pregunta vacía.
     if not pregunta:
-        # Detiene la operación antes de enviar la petición.
         raise ValueError("La pregunta no puede estar vacía.")
 
-    # Lee la clave desde la variable API_KEY del entorno.
+    # Lee la clave desde el entorno.
     api_key = os.getenv("API_KEY")
-
 
     # Construye la dirección para consultar al modelo.
     url = (
@@ -51,7 +47,7 @@ def armar_peticion(
     # Prepara el formato del contenido y la autenticación.
     headers = {
         "Content-Type": "application/json",
-        "x-goog-api-key": api_key
+        "x-goog-api-key": api_key,
     }
 
     # Coloca la pregunta en la estructura que espera Gemini.
@@ -65,19 +61,27 @@ def armar_peticion(
         ]
     }
 
-    # Agrega las instrucciones separadas del mensaje del usuario.
-    # Son opcionales para conservar las llamadas de los bloques anteriores.
+    # Agrega las instrucciones de sistema cuando se proporcionan.
     if system_instruction is not None:
-        if not isinstance(system_instruction, str) or not system_instruction.strip():
-            raise ValueError("Las instrucciones de sistema deben ser un texto no vacío.")
+        if (
+            not isinstance(system_instruction, str)
+            or not system_instruction.strip()
+        ):
+            raise ValueError(
+                "Las instrucciones de sistema deben ser un texto no vacío."
+            )
+
         body["systemInstruction"] = {
             "parts": [{"text": system_instruction.strip()}]
         }
 
-    # Solicita JSON con el esquema indicado cuando el llamador lo proporciona.
+    # Solicita una respuesta JSON con el esquema indicado.
     if response_schema is not None:
         if not isinstance(response_schema, dict) or not response_schema:
-            raise ValueError("El esquema de respuesta debe ser un diccionario no vacío.")
+            raise ValueError(
+                "El esquema de respuesta debe ser un diccionario no vacío."
+            )
+
         body["generationConfig"] = {
             "responseMimeType": "application/json",
             "responseSchema": response_schema,
@@ -87,50 +91,93 @@ def armar_peticion(
     return url, headers, body
 
 
-# Envía la petición y devuelve la respuesta como diccionario.
+# Envía una petición y clasifica los errores del servicio.
 def enviar_peticion(url, headers, body):
-    # Intenta enviar la petición y comprobar su estado HTTP.
+    # Comprueba que exista una credencial antes de enviar.
+    api_key = headers.get("x-goog-api-key")
+    if not isinstance(api_key, str) or not api_key.strip():
+        raise ValueError(
+            "Falta la credencial. Configura API_KEY en tu archivo .env."
+        )
+
     try:
-        # Envía los datos y limita el tiempo de espera.
+        # Envía los datos y conserva el tiempo de espera.
         respuesta = requests.post(
             url,
             headers=headers,
             json=body,
-            timeout=60
+            timeout=60,
         )
 
-        # Genera un HTTPError ante una respuesta HTTP de error.
-        respuesta.raise_for_status()
-
-    # Captura cuando se supera el tiempo de espera.
+    # Clasifica el tiempo de espera como un error temporal.
     except requests.exceptions.Timeout:
-        # Comunica el problema a quien llamó a esta función.
-        raise RuntimeError(
+        raise TimeoutError(
             "El servicio tardó demasiado en responder. Intenta nuevamente."
         ) from None
 
-    # Captura problemas al establecer o mantener la conexión.
+    # Clasifica los problemas de conexión como errores temporales.
     except requests.exceptions.ConnectionError:
-        raise RuntimeError(
+        raise TimeoutError(
             "No se pudo conectar con el servicio. Revisa tu conexión."
         ) from None
 
-    # Captura respuestas HTTP de error.
-    except requests.exceptions.HTTPError:
-        # Obtiene el código de estado sin mostrar credenciales.
-        codigo = respuesta.status_code
+    # Obtiene el estado HTTP sin mostrar credenciales.
+    codigo = respuesta.status_code
 
-        # Informa que el servidor no pudo atender la petición.
+        # Reconoce la credencial inválida que Gemini informa como HTTP 400.
+    if codigo == 400:
+        try:
+            datos_error = respuesta.json()
+        except requests.exceptions.JSONDecodeError:
+            datos_error = {}
+
+        # Comprueba la estructura antes de consultar los detalles.
+        error = (
+            datos_error.get("error", {})
+            if isinstance(datos_error, dict)
+            else {}
+        )
+        detalles = error.get("details", []) if isinstance(error, dict) else []
+
+        if isinstance(detalles, list) and any(
+            isinstance(detalle, dict)
+            and detalle.get("reason") == "API_KEY_INVALID"
+            for detalle in detalles
+        ):
+            raise ValueError(
+                "Credencial inválida o sin permiso. Revisa tu API_KEY."
+            )
+
+    # Los errores de autenticación o permisos no se reintentan.
+    if codigo in (401, 403):
+        raise ValueError(
+            "Credencial inválida o sin permiso. Revisa tu API_KEY."
+        )
+
+    # El límite de uso permite un reintento con espera.
+    if codigo == 429:
+        raise TimeoutError(
+            "Límite de peticiones excedido. Hay que esperar y reintentar."
+        )
+
+    # Los fallos del servidor se clasifican como temporales.
+    if 500 <= codigo < 600:
+        raise TimeoutError(
+            f"El proveedor no pudo atender la petición (HTTP {codigo}). "
+            "Hay que esperar y reintentar."
+        )
+
+    # Controla los demás errores HTTP.
+    try:
+        respuesta.raise_for_status()
+    except requests.exceptions.HTTPError:
         raise RuntimeError(
-            f"El servicio rechazó la petición o no pudo atenderla "
-            f"(HTTP {codigo})."
+            f"El servicio rechazó la petición (HTTP {codigo})."
         ) from None
 
-    # Intenta convertir el contenido recibido desde JSON.
+    # Convierte la respuesta recibida en datos de Python.
     try:
         return respuesta.json()
-
-    # Captura una respuesta cuyo contenido no sea JSON válido.
     except requests.exceptions.JSONDecodeError:
         raise RuntimeError(
             "La respuesta del servicio no llegó en formato JSON válido."
@@ -139,110 +186,105 @@ def enviar_peticion(url, headers, body):
 
 # Extrae únicamente el texto generado.
 def extraer_texto(datos):
-    # Intenta acceder al texto de la primera respuesta.
     try:
         return datos["candidates"][0]["content"]["parts"][0]["text"]
 
-    # Captura campos ausentes o listas sin el elemento esperado.
+    # Controla campos ausentes o listas vacías.
     except (KeyError, IndexError):
-        # Informa que no se encontró el texto esperado.
         raise RuntimeError(
             "La respuesta no trae el texto generado en el lugar esperado."
         ) from None
 
-# Convierte el texto generado en un objeto JSON y valida sus campos.
-# tipos_esperados es un diccionario como {"oficio": str, "motivo": str}.
+
+# Convierte el texto generado en JSON y valida campos y tipos.
 def parsear_respuesta_json(texto, tipos_esperados=None):
     if not isinstance(texto, str) or not texto.strip():
         raise ValueError("La respuesta del modelo no contiene texto JSON.")
 
-    # Acepta JSON directo o un único bloque Markdown que lo envuelva.
     contenido = texto.strip()
-    bloque = re.fullmatch(r"```(?:json)?\s*\n?(.*?)\s*```", contenido, re.DOTALL | re.IGNORECASE)
+
+    # Acepta JSON directo o envuelto en un bloque Markdown.
+    bloque = re.fullmatch(
+        r"```(?:json)?\s*\n?(.*?)\s*```",
+        contenido,
+        re.DOTALL | re.IGNORECASE,
+    )
     if bloque:
         contenido = bloque.group(1).strip()
 
-    # Rechaza valores como NaN e Infinity, que no pertenecen al JSON estándar.
+    # Rechaza constantes que no pertenecen al JSON estándar.
     def rechazar_constante(valor):
-        raise ValueError("La respuesta contiene un valor que no es JSON válido.")
+        raise ValueError(
+            "La respuesta contiene un valor que no es JSON válido."
+        )
 
     try:
-        datos = json.loads(contenido, parse_constant=rechazar_constante)
+        datos = json.loads(
+            contenido,
+            parse_constant=rechazar_constante,
+        )
     except json.JSONDecodeError:
-        raise ValueError("La respuesta del modelo no es JSON válido.") from None
+        raise ValueError(
+            "La respuesta del modelo no es JSON válido."
+        ) from None
 
-    # El banco de prompts utilizará objetos con campos identificados por nombre.
+    # La respuesta debe ser un objeto con campos identificados.
     if not isinstance(datos, dict):
         raise ValueError("La respuesta JSON debe ser un objeto.")
 
-    # Comprueba las claves obligatorias y sus tipos, si se han indicado.
+    # Comprueba las claves obligatorias y sus tipos.
     if tipos_esperados is not None:
         for clave, tipo in tipos_esperados.items():
             if clave not in datos:
-                raise ValueError(f"La respuesta JSON no contiene el campo '{clave}'.")
-            # La comprobación exacta evita aceptar True como un número entero.
+                raise ValueError(
+                    f"La respuesta JSON no contiene el campo '{clave}'."
+                )
+
+            # La comparación exacta evita aceptar bool como int.
             tipos = tipo if isinstance(tipo, tuple) else (tipo,)
             if type(datos[clave]) not in tipos:
-                raise ValueError(f"El campo '{clave}' tiene un tipo incorrecto.")
+                raise ValueError(
+                    f"El campo '{clave}' tiene un tipo incorrecto."
+                )
 
     return datos
 
 
-# Calcula el costo usando los tokens registrados en la respuesta.
-# Los precios recibidos deben estar expresados por un solo token.
+# Calcula el costo con precios expresados por un solo token.
 def calcular_costo(datos, precio_entrada, precio_salida):
-    # Intenta obtener los conteos necesarios para calcular el costo.
     try:
-        # Obtiene los metadatos de consumo de la respuesta.
+        # Obtiene los conteos registrados en la respuesta.
         uso = datos["usageMetadata"]
-
-        # Obtiene cuántos tokens se enviaron al modelo.
         tokens_entrada = uso["promptTokenCount"]
-
-        # Obtiene cuántos tokens generó el modelo en su respuesta.
         tokens_salida = uso["candidatesTokenCount"]
 
-    # Controla la ausencia de alguno de los campos necesarios.
     except KeyError:
         raise RuntimeError(
             "La respuesta no contiene los datos de uso necesarios "
             "para calcular el costo."
         ) from None
 
-    # Multiplica los tokens enviados por su precio unitario.
     costo_entrada = tokens_entrada * precio_entrada
-
-    # Multiplica los tokens generados por su precio unitario.
     costo_salida = tokens_salida * precio_salida
 
-    # Devuelve la suma de ambos costos.
     return costo_entrada + costo_salida
 
-# Coordina la preparación, el envío y la extracción.
+
+# Conserva la consulta sencilla de los bloques anteriores.
 def consultar_gemini(pregunta):
-    # Prepara la URL, los encabezados y el cuerpo.
     url, headers, body = armar_peticion(pregunta)
-
-    # Envía la petición y obtiene la respuesta.
     datos = enviar_peticion(url, headers, body)
-
-    # Extrae el texto y lo devuelve.
     return extraer_texto(datos)
 
 
-# Ejecuta la prueba solo al iniciar este archivo directamente.
+# Ejecuta esta prueba solo al iniciar el archivo directamente.
 if __name__ == "__main__":
-    # Intenta completar la consulta.
     try:
-        # Llama a la función que coordina la consulta.
         resultado = consultar_gemini(
             "Confirma en una frase corta que esta conexión funciona."
         )
-
-        # Muestra el texto generado cuando la consulta es exitosa.
         print(resultado)
 
-    # Captura errores de validación y los errores controlados.
-    except (ValueError, RuntimeError) as error:
-        # Muestra el motivo del fallo sin un traceback.
+    # Incluye los nuevos errores temporales del bloque 12.
+    except (ValueError, TimeoutError, RuntimeError) as error:
         print("No se pudo completar la operación:", error)
