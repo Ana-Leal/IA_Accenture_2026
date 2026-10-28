@@ -124,8 +124,9 @@ que el entorno esté activo y que hayas instalado las dependencias en él.
 
 ### Tiempo, tokens y costo
 
-El tiempo mostrado corresponde al envío de la petición y la recepción
-de la respuesta convertida desde JSON.
+El tiempo mostrado corresponde a la consulta completa: preparación,
+envío, reintentos, esperas y procesamiento de la respuesta, incluida
+la validación JSON.
 
 El costo usa las tarifas de referencia documentadas para el modelo:
 
@@ -142,6 +143,8 @@ que no fue posible calcular el consumo y el costo.
 ## Estructura del proyecto
 
 - `main.py`: punto de entrada de la aplicación.
+- `src/cliente.py`: coordinación de consultas, reintentos con espera
+  creciente y registro del costo por respuesta y acumulado de sesión.
 - `src/consumir_gemini.py`: preparación y envío de peticiones,
   extracción del texto, validación JSON y cálculo de costo.
 - `prompts/banco.py`: instrucciones, ejemplos y esquemas de los prompts.
@@ -349,7 +352,9 @@ y conserva la validación de la respuesta JSON.
 ### Manejo de errores
 
 - Los errores de conexión, timeout, HTTP 429 y HTTP 5xx permiten
-  hasta tres intentos totales, con dos segundos entre intentos.
+  hasta tres intentos totales. En el bloque 12 se utilizaba una espera
+  fija de dos segundos; desde el bloque 13 se utiliza espera creciente
+  con variación aleatoria y límite máximo.
 - No se espera ni se vuelve a intentar después del tercer fallo.
 - Las credenciales ausentes o inválidas se informan sin reintentar.
   Se reconocen HTTP 401, HTTP 403 y HTTP 400 con
@@ -408,11 +413,38 @@ coinciden.
 
 La estimación no implica un cobro en el nivel gratuito.
 
-### Estado de la comprobación de HTTP 429
+### Comprobación real del límite de uso
 
-Las pruebas automatizadas simulan respuestas HTTP 429 y comprueban
-los reintentos. La comprobación real del límite de uso y su registro
-de observaciones están pendientes.
+El 28 de octubre de 2026 se ejecutaron 10 consultas consecutivas
+mediante `tests/prueba_limite_uso.py`.
+
+- Consultas realizadas: 10.
+- Intentos de envío: 10.
+- Respuestas HTTP 200: 10.
+- Respuestas HTTP 429: ninguna.
+- Reintentos y esperas: ninguno.
+- Costo estimado acumulado conocido: USD 0.00006800.
+
+La ejecución confirmó las consultas exitosas y el registro del costo.
+No se alcanzó el límite de uso, por lo que todavía no se ha acreditado
+la recuperación ante un HTTP 429 real solicitada en el bloque 13.
+Ese comportamiento sí está verificado mediante pruebas simuladas.
+
+El costo utiliza tarifas de referencia y no implica necesariamente
+un cobro en el nivel gratuito.
+
+[Ver registro de la ejecución](docs/evidencias_bloque13/prueba_limite_uso.json)
+
+Para ejecutar nuevamente el ensayo, desde la raíz del repositorio
+y con el entorno virtual activo:
+
+```bash
+python -u tests/prueba_limite_uso.py
+```
+
+Este comando realiza consultas reales y consume cuota de la API.
+Cada consulta puede efectuar hasta tres intentos. Una nueva ejecución
+reemplaza el archivo de registro anterior.
 
 ## Bloque 14: pruebas unitarias del cliente modular
 
@@ -453,24 +485,3 @@ python tests/pruebas_bloque12.py
 
 Las tres comprobaciones pasaron. La prueba del bloque 12 se adaptó
 para comprobar las nuevas esperas crecientes.
-
-### Comprobación real del límite de uso
-
-Se ejecutaron 10 consultas consecutivas mediante
-`tests/prueba_limite_uso.py`.
-
-- Consultas realizadas: 10.
-- Intentos de envío: 10.
-- Respuestas HTTP 200: 10.
-- Respuestas HTTP 429: ninguna.
-- Reintentos y esperas: ninguno.
-- Costo estimado acumulado conocido: USD 0.00006800.
-
-En esta ejecución no se alcanzó el límite de uso. Por tanto,
-no se verificó la recuperación ante un HTTP 429 real.
-Ese comportamiento sí se comprobó mediante pruebas simuladas.
-
-El costo utiliza tarifas de referencia y no implica necesariamente
-un cobro en el nivel gratuito.
-
-[Ver registro de la ejecución](docs/evidencias_bloque13/prueba_limite_uso.json)
