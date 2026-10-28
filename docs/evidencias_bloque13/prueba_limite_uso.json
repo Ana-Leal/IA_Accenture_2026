@@ -1,0 +1,107 @@
+{
+  "fecha": "2026-10-28T18:51:36.076366-03:00",
+  "consultas_planificadas": 10,
+  "consultas": [
+    {
+      "consulta": 1,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 2,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 3,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 4,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 5,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 6,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 7,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 8,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 9,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    },
+    {
+      "consulta": 10,
+      "estados_http": [
+        200
+      ],
+      "esperas_segundos": [],
+      "resultado": "correcto",
+      "intentos": 1,
+      "costo_estimado_usd": 6.8e-06
+    }
+  ],
+  "costo_acumulado_conocido_usd": 6.800000000000001e-05
+}

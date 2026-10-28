@@ -84,7 +84,7 @@ if __name__ == "__main__":
             print(f"Tiempo: {duracion:.2f} segundos")
             print("Respuesta:", texto, flush=True)
 
-        except (ValueError, RuntimeError) as error:
+        except (ValueError, RuntimeError, TimeoutError  ) as error:
             # Muestra el fallo controlado si la consulta no resulta.
             print("Consulta fallida:", error, flush=True)
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                 print(f"Tiempo: {duracion:.2f} segundos")
                 print("Respuesta:", texto, flush=True)
 
-            except (ValueError, RuntimeError) as error:
+            except (ValueError, RuntimeError, TimeoutError) as error:
                 # Registra el fallo sin presentarlo como una respuesta válida.
                 print("Intento fallido:", error, flush=True)
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
                 print(f"Tiempo: {duracion:.2f} segundos")
                 print("Respuesta:", texto, flush=True)
 
-            except (ValueError, RuntimeError) as error:
+            except (ValueError, RuntimeError, TimeoutError) as error:
                 print("Consulta fallida:", error, flush=True)
 
     print("\nComparación terminada. Revisa los resultados y posibles fallos.")

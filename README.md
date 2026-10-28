@@ -376,3 +376,101 @@ No realizan llamadas a la API.
 Comprueban la recuperación ante HTTP 429 y 503, el agotamiento
 de los tres intentos y el rechazo de credenciales inválidas
 sin reintentos para HTTP 401, 403 y 400 con `API_KEY_INVALID`.
+
+## Bloque 13: espera creciente y registro de costos
+
+El cliente modular de `src/cliente.py` reintenta únicamente los errores
+temporales, con un máximo predeterminado de tres intentos.
+
+Entre intentos utiliza una espera base de 2 segundos que se duplica,
+agrega una variación aleatoria de hasta un 10 % y respeta un máximo
+de 30 segundos por espera. No espera después del último intento.
+
+Los errores de credenciales no se reintentan.
+
+### Registro del costo
+
+El cliente calcula el costo estimado de cada respuesta con datos de uso
+válidos y lo acumula durante la ejecución del programa.
+
+El cálculo utiliza tarifas de referencia por token e incluye los tokens
+de entrada, respuesta y razonamiento. Las tarifas están definidas en
+`src/cliente.py`.
+
+Si faltan datos de uso válidos, el costo se considera desconocido y
+no se agrega al acumulado. No se contabilizan consumos desconocidos
+de intentos fallidos.
+
+`main.py` muestra el costo de la última respuesta y el acumulado conocido.
+El acumulado se reinicia al iniciar otra ejecución. Como `main.py`
+realiza una sola consulta por ejecución, normalmente ambos valores
+coinciden.
+
+La estimación no implica un cobro en el nivel gratuito.
+
+### Estado de la comprobación de HTTP 429
+
+Las pruebas automatizadas simulan respuestas HTTP 429 y comprueban
+los reintentos. La comprobación real del límite de uso y su registro
+de observaciones están pendientes.
+
+## Bloque 14: pruebas unitarias del cliente modular
+
+Las pruebas se encuentran en `tests/test_cliente.py` y utilizan `pytest`.
+
+Comprueban:
+
+- Respuestas HTTP exitosas y errores de credenciales.
+- Clasificación de HTTP 429 y errores del servidor como temporales.
+- Recuperación mediante reintentos y agotamiento del límite.
+- Esperas crecientes, variación aleatoria y límite de espera.
+- Propagación de errores que no deben reintentarse.
+- Cálculo del costo, tokens de razonamiento y acumulación por sesión.
+- Manejo de datos de uso faltantes.
+- Coordinación del cliente sin registrar varias veces una misma respuesta.
+
+Las peticiones HTTP y las esperas se simulan. Estas pruebas no requieren
+una credencial real, no realizan consultas a Gemini y no consumen tokens.
+
+### Ejecutar las pruebas unitarias
+
+Desde la raíz del repositorio, con el entorno virtual activo y las
+dependencias de `requirements.txt` instaladas:
+
+```bash
+python -m pytest tests/test_cliente.py -v
+```
+
+Resultado de la ejecución realizada: **17 pruebas aprobadas**.
+
+### Ejecutar las pruebas anteriores
+
+```bash
+python tests/pruebas_bloque_7.py
+python tests/pruebas_bloque_8.py
+python tests/pruebas_bloque12.py
+```
+
+Las tres comprobaciones pasaron. La prueba del bloque 12 se adaptó
+para comprobar las nuevas esperas crecientes.
+
+### Comprobación real del límite de uso
+
+Se ejecutaron 10 consultas consecutivas mediante
+`tests/prueba_limite_uso.py`.
+
+- Consultas realizadas: 10.
+- Intentos de envío: 10.
+- Respuestas HTTP 200: 10.
+- Respuestas HTTP 429: ninguna.
+- Reintentos y esperas: ninguno.
+- Costo estimado acumulado conocido: USD 0.00006800.
+
+En esta ejecución no se alcanzó el límite de uso. Por tanto,
+no se verificó la recuperación ante un HTTP 429 real.
+Ese comportamiento sí se comprobó mediante pruebas simuladas.
+
+El costo utiliza tarifas de referencia y no implica necesariamente
+un cobro en el nivel gratuito.
+
+[Ver registro de la ejecución](docs/evidencias_bloque13/prueba_limite_uso.json)

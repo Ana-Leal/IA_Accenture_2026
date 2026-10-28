@@ -45,18 +45,48 @@ def probar_recuperacion(codigo):
             crear_respuesta(codigo, {}),
             crear_respuesta(200, DATOS_VALIDOS),
         ],
-    ) as envio, patch("src.cliente.sleep") as pausa:
+    ) as envio, patch("src.cliente.sleep") as pausa, patch(
+        "src.cliente.uniform", return_value=0
+    ):
         resultado, datos = consultar_modelo("Necesito reparar una llave.")
 
         assert resultado == "Respuesta simulada correcta"
         assert datos == DATOS_VALIDOS
         assert envio.call_count == 3
         assert pausa.call_count == 2
-        assert all(
-            llamada.args == (2,) for llamada in pausa.call_args_list
-        )
+
+        # Comprobación anterior del bloque 12: espera fija.
+        # assert all(
+        #     llamada.args == (2,) for llamada in pausa.call_args_list
+        # )
+
+        # Ahora comprueba esperas crecientes, sin variación aleatoria.
+        assert [
+            llamada.args[0] for llamada in pausa.call_args_list
+        ] == [2, 4]
 
     print(f"CORRECTO: HTTP {codigo}, recuperación en el tercer intento.")
+#def probar_recuperacion(codigo):
+#    # Simula dos fallos y una respuesta correcta.
+#    with patch.dict("os.environ", {"API_KEY": "clave_ficticia"}), patch(
+#        "src.consumir_gemini.requests.post",
+#        side_effect=[
+#            crear_respuesta(codigo, {}),
+#            crear_respuesta(codigo, {}),
+#            crear_respuesta(200, DATOS_VALIDOS),
+#        ],
+#    ) as envio, patch("src.cliente.sleep") as pausa:
+#        resultado, datos = consultar_modelo("Necesito reparar una llave.")
+#
+#        assert resultado == "Respuesta simulada correcta"
+#        assert datos == DATOS_VALIDOS
+#        assert envio.call_count == 3
+#        assert pausa.call_count == 2
+#        assert all(
+#            llamada.args == (2,) for llamada in pausa.call_args_list
+#       )
+#
+#    print(f"CORRECTO: HTTP {codigo}, recuperación en el tercer intento.")
 
 
 def probar_agotamiento():

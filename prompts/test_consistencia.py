@@ -92,7 +92,7 @@ def main():
                 resultado["exitos"] += 1
                 print("CORRECTO: JSON con las claves y tipos esperados.", flush=True)
 
-            except (ValueError, RuntimeError, TypeError) as error:
+            except (ValueError, RuntimeError, TypeError, TimeoutError) as error:
                 # Cuenta el fallo y continúa con las consultas restantes.
                 detalle["error"] = str(error)
                 resultado["fallos"] += 1
