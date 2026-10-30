@@ -485,3 +485,53 @@ python tests/pruebas_bloque12.py
 
 Las tres comprobaciones pasaron. La prueba del bloque 12 se adaptó
 para comprobar las nuevas esperas crecientes.
+## Bloque 15: pipeline de procesamiento de texto
+
+El módulo `src/pipeline_texto.py` contiene tres funciones:
+
+- `limpiar_texto`: normaliza mayúsculas, puntuación y espacios.
+- `tokenizar`: separa el texto limpio en palabras.
+- `procesar_texto`: combina ambos pasos.
+
+### Pruebas unitarias
+
+Desde la raíz del repositorio, con el entorno virtual activo:
+
+```bash
+python -m pytest tests/test_pipeline_texto.py -v
+```
+
+Las dos pruebas pasaron: normalización de mayúsculas y puntuación,
+y entrada de solo puntuación que devuelve una lista vacía.
+No realizan llamadas a la API.
+
+### Evaluación con tres respuestas reales
+
+Se utilizó el prompt `resumir_necesidad` mediante `consultar_modelo`.
+Se comparó el campo `resumen` con referencias escritas previamente.
+
+La coincidencia se calcula dividiendo las palabras únicas compartidas
+por las palabras únicas de la referencia. Se procesan ambos textos.
+Si la referencia no contiene palabras, se devuelve 0 para evitar
+una división por cero.
+
+| Caso | Sin limpiar | Después de procesar |
+|---|---:|---:|
+| Reparar la llave del lavaplatos | 85.7 % | 100.0 % |
+| Fabricar e instalar un mueble | 88.9 % | 100.0 % |
+| Pintar las paredes del living | 60.0 % | 100.0 % |
+
+La limpieza eliminó diferencias de puntuación y mayúsculas.
+Esta métrica no evalúa significado, orden ni repeticiones:
+una coincidencia del 100 % no garantiza una respuesta correcta.
+
+[Ver respuestas y métricas](docs/evidencias_bloque15/comparacion_textos.json)
+
+Para repetir la evaluación:
+
+```bash
+python -u tests/evaluar_pipeline_bloque15.py
+```
+
+Este comando realiza tres consultas reales, con posibles reintentos,
+consume cuota de la API y reemplaza el registro anterior.
