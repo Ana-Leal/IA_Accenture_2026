@@ -535,3 +535,65 @@ python -u tests/evaluar_pipeline_bloque15.py
 
 Este comando realiza tres consultas reales, con posibles reintentos,
 consume cuota de la API y reemplaza el registro anterior.
+
+## Bloque 16: precisión, cobertura y F1
+
+El módulo `src/metricas_texto.py` reutiliza el procesamiento del
+bloque 15 y calcula coincidencias mediante `Counter`, considerando
+las repeticiones de cada palabra.
+
+- Precisión: coincidencias divididas por las palabras de la respuesta.
+- Cobertura: coincidencias divididas por las palabras de la referencia.
+- F1: media armónica de precisión y cobertura.
+
+Si alguno de los textos queda vacío, las tres métricas devuelven cero
+para evitar divisiones por cero.
+
+### Pruebas unitarias
+
+Desde la raíz del repositorio, con el entorno virtual activo:
+
+```bash
+python -m pytest tests/test_metricas_texto.py -v
+```
+
+Resultado: nueve pruebas aprobadas. Comprueban textos equivalentes,
+respuestas incompletas, repeticiones adicionales, ausencia de
+coincidencias, textos vacíos y cálculo de promedios.
+
+Estas pruebas no realizan llamadas a la API.
+
+### Evaluación de respuestas reales guardadas
+
+```bash
+python tests/evaluar_metricas_bloque16.py
+```
+
+El script reutiliza las tres respuestas reales del bloque 15,
+guardadas en `docs/evidencias_bloque15/comparacion_textos.json`.
+Evalúa el campo `resumen` contra las referencias originales.
+No genera nuevas respuestas ni consume cuota de la API.
+
+| Caso | Precisión | Cobertura | F1 |
+|---|---:|---:|---:|
+| Reparar la llave del lavaplatos | 100 % | 100 % | 100 % |
+| Fabricar e instalar un mueble | 100 % | 100 % | 100 % |
+| Pintar las paredes del living | 100 % | 100 % | 100 % |
+| Promedio | 100 % | 100 % | 100 % |
+
+Los casos se ordenan de menor a mayor F1. En esta ejecución están
+empatados porque los textos procesados coinciden con sus referencias.
+
+[Ver respuestas, referencias y métricas](docs/evidencias_bloque16/resultados_metricas.json)
+
+Una nueva ejecución reemplaza este registro de métricas, sin modificar
+las respuestas originales del bloque 15.
+
+### Límites de la evaluación
+
+Estas métricas comparan palabras y sus cantidades; no verifican
+significado, orden ni veracidad. Los sinónimos pueden reducir el
+puntaje y una negación ausente puede mantener un puntaje alto.
+
+El 100 % observado corresponde únicamente a estos tres resúmenes.
+No garantiza la calidad de otras respuestas ni evalúa el campo `lugar`.

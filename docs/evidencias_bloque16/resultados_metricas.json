@@ -1,0 +1,41 @@
+{
+  "origen": "docs/evidencias_bloque15/comparacion_textos.json",
+  "fecha_generacion_respuestas_utc": "2026-10-30T16:05:52.399685+00:00",
+  "prompt": "resumir_necesidad",
+  "campo_evaluado": "resumen",
+  "metodo": "Coincidencias de palabras con Counter",
+  "resultados": [
+    {
+      "caso": 1,
+      "consulta": "Necesito reparar la llave del lavaplatos que gotea.",
+      "referencia": "Reparar la llave del lavaplatos que gotea.",
+      "respuesta": "Reparar la llave del lavaplatos que gotea",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 2,
+      "consulta": "Necesito fabricar e instalar un mueble de madera a medida para mi dormitorio.",
+      "referencia": "Fabricar e instalar un mueble de madera a medida.",
+      "respuesta": "Fabricar e instalar un mueble de madera a medida",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 3,
+      "consulta": "Necesito pintar las paredes del living porque la pintura está desgastada.",
+      "referencia": "Pintar las paredes del living.",
+      "respuesta": "pintar las paredes del living",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    }
+  ],
+  "promedios": {
+    "precision_promedio": 1.0,
+    "cobertura_promedio": 1.0,
+    "f1_promedio": 1.0
+  }
+}
