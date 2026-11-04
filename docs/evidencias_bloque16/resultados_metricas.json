@@ -1,10 +1,100 @@
 {
   "origen": "docs/evidencias_bloque15/comparacion_textos.json",
-  "fecha_generacion_respuestas_utc": "2026-10-30T16:05:52.399685+00:00",
+  "fecha_respuestas_bloque15_utc": "2026-10-30T16:05:52.399685+00:00",
   "prompt": "resumir_necesidad",
   "campo_evaluado": "resumen",
   "metodo": "Coincidencias de palabras con Counter",
   "resultados": [
+    {
+      "caso": 5,
+      "consulta": "Necesito instalar una lámpara en el comedor.",
+      "referencia": "Instalar una lámpara en el comedor.",
+      "respuesta": "Instalar una lámpara",
+      "precision": 1.0,
+      "cobertura": 0.5,
+      "f1": 0.6666666666666666
+    },
+    {
+      "caso": 8,
+      "consulta": "Necesito armar un escritorio que compré para mi dormitorio.",
+      "referencia": "Armar un escritorio para el dormitorio.",
+      "respuesta": "Armar un escritorio",
+      "precision": 1.0,
+      "cobertura": 0.5,
+      "f1": 0.6666666666666666
+    },
+    {
+      "caso": 9,
+      "consulta": "Necesito cambiar tres enchufes del living.",
+      "referencia": "Cambiar tres enchufes del living.",
+      "respuesta": "Cambiar tres enchufes",
+      "precision": 1.0,
+      "cobertura": 0.6,
+      "f1": 0.7499999999999999
+    },
+    {
+      "caso": 12,
+      "consulta": "Necesito pintar solo una pared del dormitorio, no las cuatro paredes.",
+      "referencia": "Pintar solo una pared del dormitorio, no las cuatro paredes.",
+      "respuesta": "Pintar solo una pared del dormitorio",
+      "precision": 1.0,
+      "cobertura": 0.6,
+      "f1": 0.7499999999999999
+    },
+    {
+      "caso": 14,
+      "consulta": "Necesito revisar una mancha de humedad en el dormitorio. Todavía no quiero pintar la pared.",
+      "referencia": "Revisar una mancha de humedad en el dormitorio sin pintar la pared todavía.",
+      "respuesta": "Revisar una mancha de humedad en el dormitorio",
+      "precision": 1.0,
+      "cobertura": 0.6153846153846154,
+      "f1": 0.761904761904762
+    },
+    {
+      "caso": 10,
+      "consulta": "Necesito instalar dos repisas de madera en la cocina.",
+      "referencia": "Instalar dos repisas de madera en la cocina.",
+      "respuesta": "Instalar dos repisas de madera",
+      "precision": 1.0,
+      "cobertura": 0.625,
+      "f1": 0.7692307692307693
+    },
+    {
+      "caso": 6,
+      "consulta": "Necesito reparar una ventana que no cierra en la cocina.",
+      "referencia": "Reparar una ventana que no cierra en la cocina.",
+      "respuesta": "Reparar una ventana que no cierra",
+      "precision": 1.0,
+      "cobertura": 0.6666666666666666,
+      "f1": 0.8
+    },
+    {
+      "caso": 20,
+      "consulta": "Necesito cambiar las bisagras de un mueble. Son cuatro bisagras y quiero conservar las puertas.",
+      "referencia": "Cambiar cuatro bisagras de un mueble conservando las puertas.",
+      "respuesta": "Cambiar las bisagras de un mueble",
+      "precision": 1.0,
+      "cobertura": 0.6666666666666666,
+      "f1": 0.8
+    },
+    {
+      "caso": 17,
+      "consulta": "Necesito retirar una repisa rota e instalar una nueva en el dormitorio.",
+      "referencia": "Retirar una repisa rota e instalar una nueva en el dormitorio.",
+      "respuesta": "Retirar una repisa rota e instalar una nueva",
+      "precision": 1.0,
+      "cobertura": 0.7272727272727273,
+      "f1": 0.8421052631578948
+    },
+    {
+      "caso": 11,
+      "consulta": "Necesito fabricar una mesa de madera de 120 centímetros de largo para el comedor.",
+      "referencia": "Fabricar una mesa de madera de 120 centímetros de largo para el comedor.",
+      "respuesta": "Fabricar una mesa de madera de 120 centímetros de largo",
+      "precision": 1.0,
+      "cobertura": 0.7692307692307693,
+      "f1": 0.8695652173913044
+    },
     {
       "caso": 1,
       "consulta": "Necesito reparar la llave del lavaplatos que gotea.",
@@ -31,11 +121,74 @@
       "precision": 1.0,
       "cobertura": 1.0,
       "f1": 1.0
+    },
+    {
+      "caso": 4,
+      "consulta": "Necesito cambiar la cerradura de la puerta principal.",
+      "referencia": "Cambiar la cerradura de la puerta principal.",
+      "respuesta": "Cambiar la cerradura de la puerta principal",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 7,
+      "consulta": "Necesito limpiar la canaleta del techo del patio.",
+      "referencia": "Limpiar la canaleta del techo del patio.",
+      "respuesta": "Limpiar la canaleta del techo del patio",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 13,
+      "consulta": "Necesito reparar la puerta del baño, pero no quiero reemplazarla.",
+      "referencia": "Reparar la puerta del baño sin reemplazarla.",
+      "respuesta": "Reparar la puerta del baño sin reemplazarla",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 15,
+      "consulta": "Necesito reparar la llave del baño y destapar el desagüe del lavamanos.",
+      "referencia": "Reparar la llave del baño y destapar el desagüe del lavamanos.",
+      "respuesta": "Reparar la llave del baño y destapar el desagüe del lavamanos",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 16,
+      "consulta": "Necesito lijar y barnizar una mesa de madera del comedor.",
+      "referencia": "Lijar y barnizar una mesa de madera del comedor.",
+      "respuesta": "Lijar y barnizar una mesa de madera del comedor",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 18,
+      "consulta": "La puerta del dormitorio roza el piso cuando la abro. Necesito que la ajusten.",
+      "referencia": "Ajustar la puerta del dormitorio que roza el piso.",
+      "respuesta": "Ajustar la puerta del dormitorio que roza el piso",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
+    },
+    {
+      "caso": 19,
+      "consulta": "El lavamanos del baño está tapado y el agua no baja. Necesito que lo destapen.",
+      "referencia": "Destapar el lavamanos del baño.",
+      "respuesta": "Destapar el lavamanos del baño",
+      "precision": 1.0,
+      "cobertura": 1.0,
+      "f1": 1.0
     }
   ],
   "promedios": {
     "precision_promedio": 1.0,
-    "cobertura_promedio": 1.0,
-    "f1_promedio": 1.0
+    "cobertura_promedio": 0.8135110722610722,
+    "f1_promedio": 0.8838069672509032
   }
 }

@@ -563,37 +563,54 @@ coincidencias, textos vacíos y cálculo de promedios.
 
 Estas pruebas no realizan llamadas a la API.
 
-### Evaluación de respuestas reales guardadas
+### Evaluación de respuestas y ampliación del bloque 17
+
+Desde la raíz del repositorio, con el entorno virtual activo
+y `API_KEY` configurada:
 
 ```bash
-python tests/evaluar_metricas_bloque16.py
+python -u tests/evaluar_metricas_bloque16.py
 ```
 
-El script reutiliza las tres respuestas reales del bloque 15,
-guardadas en `docs/evidencias_bloque15/comparacion_textos.json`.
-Evalúa el campo `resumen` contra las referencias originales.
-No genera nuevas respuestas ni consume cuota de la API.
+El script reutiliza tres respuestas guardadas del bloque 15 y
+realiza 17 consultas nuevas mediante el cliente modular.
+Las consultas y referencias nuevas están en `tests/casos_bloque17.py`.
 
-| Caso | Precisión | Cobertura | F1 |
-|---|---:|---:|---:|
-| Reparar la llave del lavaplatos | 100 % | 100 % | 100 % |
-| Fabricar e instalar un mueble | 100 % | 100 % | 100 % |
-| Pintar las paredes del living | 100 % | 100 % | 100 % |
-| Promedio | 100 % | 100 % | 100 % |
+Evalúa el campo `resumen` y guarda los veinte casos ordenados
+de menor a mayor F1 en
+`docs/evidencias_bloque16/resultados_metricas.json`.
 
-Los casos se ordenan de menor a mayor F1. En esta ejecución están
-empatados porque los textos procesados coinciden con sus referencias.
+Resultados de la ejecución registrada:
+
+| Métrica | Promedio |
+|---|---:|
+| Precisión | 100,00 % |
+| Cobertura | 81,35 % |
+| F1 | 88,38 % |
+
+Cada ejecución realiza nuevamente las 17 consultas, consume cuota
+de la API y reemplaza el registro al terminar. No es necesario
+ejecutarlo para leer las evidencias guardadas.
 
 [Ver respuestas, referencias y métricas](docs/evidencias_bloque16/resultados_metricas.json)
-
-Una nueva ejecución reemplaza este registro de métricas, sin modificar
-las respuestas originales del bloque 15.
-
 ### Límites de la evaluación
 
 Estas métricas comparan palabras y sus cantidades; no verifican
 significado, orden ni veracidad. Los sinónimos pueden reducir el
 puntaje y una negación ausente puede mantener un puntaje alto.
 
-El 100 % observado corresponde únicamente a estos tres resúmenes.
-No garantiza la calidad de otras respuestas ni evalúa el campo `lugar`.
+Los resultados corresponden únicamente a los veinte resúmenes evaluados.
+No garantizan la calidad de otras respuestas ni evalúan el campo `lugar`.
+
+## Bloque 17: revisión cualitativa y límites
+Se evaluaron veinte respuestas y se revisaron manualmente diez:
+cinco del extremo inferior y cinco del extremo superior de F1.
+
+La revisión considera corrección factual, completitud y
+contradicción, con una justificación por caso.
+
+- [Revisión manual](docs/revision_manual.md).
+- [Límites de la métrica y recomendación de uso](docs/limites_metrica.md).
+
+La revisión se realizó sobre las respuestas guardadas, sin
+generar consultas adicionales.
