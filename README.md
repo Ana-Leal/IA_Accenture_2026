@@ -614,3 +614,57 @@ contradicción, con una justificación por caso.
 
 La revisión se realizó sobre las respuestas guardadas, sin
 generar consultas adicionales.
+## Bloque 18: cadena de tres pasos con LangChain
+
+El módulo `src/cadena_tres_pasos.py` conecta tres tareas:
+
+1. Extraer la necesidad, conservando lugares, cantidades y restricciones.
+2. Orientar sobre el oficio adecuado o pedir aclaración si faltan datos.
+3. Redactar la orientación en lenguaje sencillo.
+
+Cada paso utiliza un `PromptTemplate`, el modelo y `StrOutputParser`.
+El operador `|` conecta los pasos y las funciones intermedias preparan
+la entrada de la siguiente plantilla.
+
+La función `construir_cadena(modelo)` recibe el modelo como parámetro,
+lo que permite probarla con respuestas simuladas.
+
+### Ejecutar la cadena
+
+Desde la raíz del repositorio, con el entorno virtual activo,
+las dependencias instaladas y `API_KEY` configurada en `.env`:
+
+```bash
+python -m src.cadena_tres_pasos
+```
+
+El módulo utiliza la solicitud de ejemplo incluida en el código.
+Reutiliza `API_KEY` mediante la variable `GEMINI_API_KEY` durante
+la ejecución, sin modificar el archivo `.env`.
+
+La cadena realiza tres llamadas reales a Gemini, además de los
+posibles reintentos del conector, y consume cuota de la API.
+
+### Prueba unitaria
+
+```bash
+python -m pytest tests/test_cadena_tres_pasos.py -v
+```
+
+La prueba verifica las tres llamadas, el paso de las respuestas
+entre etapas y la salida final como texto. Utiliza un modelo
+simulado: no necesita una credencial real ni consume tokens.
+
+Resultado observado: una prueba aprobada.
+
+### Resultado de la ejecución real
+
+Se probó una solicitud de reparación de una puerta de madera
+del baño, conservando la puerta y la cerradura actuales.
+
+La respuesta recomendó un carpintero y conservó las condiciones
+de no reemplazarlas ni realizar otros trabajos sin consultar.
+Presentó tres viñetas, aunque añadió una introducción.
+
+Esta ejecución demuestra el funcionamiento completo para ese caso;
+no garantiza que todas las respuestas conserven siempre los detalles.
