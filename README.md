@@ -705,3 +705,30 @@ Se realizaron tres consultas reales con estos resultados:
 Las tres categorías coincidieron con lo esperado.
 Esta comprobación evaluó la clasificación; las rutas se verificaron
 mediante las pruebas automatizadas.
+## Bloque 20: manejo de errores del flujo orquestado
+
+El módulo `src/enrutamiento.py` incorpora dos mecanismos:
+
+- `construir_cadena_queja_segura`: protege la ruta de quejas mediante
+  `with_fallbacks` y devuelve una respuesta de respaldo si falla.
+- `procesar_mensaje_seguro`: ejecuta la cadena dentro de un
+  `try/except`, registra los errores no cubiertos por el respaldo
+  y devuelve un mensaje controlado.
+
+### Ejecutar las pruebas
+
+Desde la raíz del repositorio, con el entorno virtual activo:
+
+```bash
+python -m pytest tests/test_enrutamiento.py tests/test_orquestacion.py -v
+```
+
+Resultado: siete pruebas aprobadas.
+
+Las cinco pruebas del bloque 19 verifican las rutas, la categoría
+desconocida y la normalización. Las dos del bloque 20 comprueban
+el respaldo ante un fallo de la ruta de quejas y la captura de
+un fallo en la clasificación, incluido su registro en consola.
+
+Las pruebas utilizan simulaciones, no llaman a Gemini
+y no consumen cuota de la API.

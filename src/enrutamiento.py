@@ -1,5 +1,6 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableLambda
 from langchain_core.runnables import (
     RunnableBranch,
     RunnablePassthrough,
@@ -49,6 +50,32 @@ def construir_cadena_con_enrutamiento(
         | bifurcacion
     )
 
+# Respuesta de respaldo si falla la ruta de quejas.
+respuesta_generica = RunnableLambda(
+    lambda datos: (
+        "No pudimos generar una respuesta a tu queja en este momento. "
+        "Intenta nuevamente más tarde."
+    )
+)
+
+
+# Protege la ruta de quejas con una alternativa.
+def construir_cadena_queja_segura(cadena_queja):
+    return cadena_queja.with_fallbacks([respuesta_generica])
+
+
+# Captura los errores que no cubre el respaldo de una ruta.
+def procesar_mensaje_seguro(cadena, mensaje):
+    try:
+        return cadena.invoke({"mensaje": mensaje})
+
+    except Exception as error:
+        # Registra el fallo antes de devolver una respuesta controlada.
+        print(f"Error procesando mensaje: {error}")
+        return (
+            "No pudimos procesar tu mensaje en este momento. "
+            "Intenta de nuevo más tarde."
+        )
 
 # Prepara las rutas reales utilizando el modelo recibido.
 def construir_enrutamiento(modelo):
@@ -92,7 +119,7 @@ def construir_enrutamiento(modelo):
 
     return construir_cadena_con_enrutamiento(
         paso_clasificacion=construir_paso_clasificacion(modelo),
-        cadena_queja=cadena_queja,
+        cadena_queja=construir_cadena_queja_segura(cadena_queja),
         cadena_sugerencia=cadena_sugerencia,
         cadena_pregunta=cadena_pregunta,
     )
