@@ -668,3 +668,40 @@ Presentó tres viñetas, aunque añadió una introducción.
 
 Esta ejecución demuestra el funcionamiento completo para ese caso;
 no garantiza que todas las respuestas conserven siempre los detalles.
+
+## Bloque 19: enrutamiento condicional
+
+El módulo `src/enrutamiento.py` clasifica los mensajes como pregunta,
+queja o sugerencia y selecciona una ruta con un prompt diferente.
+
+La clasificación se normaliza con `.strip().lower()`.
+`RunnablePassthrough.assign` conserva el mensaje original y agrega
+la categoría. `RunnableBranch` selecciona la ruta; pregunta funciona
+como ruta por defecto cuando ninguna condición coincide.
+
+### Pruebas automatizadas
+
+Desde la raíz del repositorio, con el entorno virtual activo:
+
+```bash
+python -m pytest tests/test_enrutamiento.py -v
+```
+
+Resultado: cinco pruebas aprobadas. Comprueban las rutas de queja,
+sugerencia y pregunta, una categoría desconocida y la normalización.
+
+Estas pruebas utilizan mocks y no realizan llamadas a Gemini.
+
+### Comprobación manual de clasificación
+
+Se realizaron tres consultas reales con estos resultados:
+
+| Mensaje | Categoría esperada | Categoría obtenida |
+|---|---|---|
+| ¿Cómo cambio mi contraseña? | pregunta | pregunta |
+| La app se cierra cada vez que subo una foto. | queja | queja |
+| Estaría bueno que la app tuviera modo oscuro. | sugerencia | sugerencia |
+
+Las tres categorías coincidieron con lo esperado.
+Esta comprobación evaluó la clasificación; las rutas se verificaron
+mediante las pruebas automatizadas.
