@@ -732,3 +732,39 @@ un fallo en la clasificación, incluido su registro en consola.
 
 Las pruebas utilizan simulaciones, no llaman a Gemini
 y no consumen cuota de la API.
+## Bloque 21: agente con herramientas
+
+El archivo `src/agente_con_herramientas.py` implementa un agente
+con `create_tool_calling_agent` y `AgentExecutor`.
+
+El agente dispone de dos herramientas:
+
+- `consultar_oficio`: consulta un catálogo local de oficios.
+- `calcular_superficie`: calcula el área de una pared rectangular
+  a partir del ancho y alto en metros, sin descontar aberturas.
+
+Cada herramienta incluye argumentos tipados y una descripción
+que indica cuándo utilizarla.
+
+### Ejecutar el agente
+
+Desde la raíz del repositorio, con el entorno virtual activo,
+las dependencias instaladas y `API_KEY` configurada en `.env`:
+
+```bash
+python -m src.agente_con_herramientas
+```
+
+La ejecución realiza consultas reales a Gemini y consume cuota.
+Muestra la respuesta final y las herramientas utilizadas mediante
+`intermediate_steps`, incluidos sus argumentos y resultados.
+
+### Comprobaciones realizadas
+
+| Consulta | Herramienta utilizada | Resultado |
+|---|---|---|
+| Según el catálogo, ¿qué trabajos realiza un carpintero? | `consultar_oficio` | Fabrica y repara muebles y elementos de madera. |
+| ¿Cuál es la superficie de una pared de 4 metros de ancho y 2,5 metros de alto? | `calcular_superficie` | 10 m². |
+
+En ambas ejecuciones se verificó la herramienta elegida,
+sus argumentos y el resultado devuelto.
