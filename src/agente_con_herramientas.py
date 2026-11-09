@@ -1,16 +1,19 @@
 import os
 from math import isfinite
-
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import tool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
+# Bloque 22: guarda los mensajes de cada conversación.
+from langchain_core.chat_history import InMemoryChatMessageHistory
+# Conecta el historial con el agente.
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_classic.agents import (
     AgentExecutor,
     create_tool_calling_agent,
 )
-
-
 # Herramienta 1: consulta información definida en nuestro catálogo.
 @tool
 def consultar_oficio(oficio: str) -> str:
@@ -42,7 +45,20 @@ def consultar_oficio(oficio: str) -> str:
 
 
 # Herramienta 2: realiza un cálculo con las medidas proporcionadas.
-@tool
+# Bloque 21: conservamos el decorador anterior como referencia.
+# @tool
+# Bloque 22: describe cada medida que recibe la herramienta.
+class ArgumentosSuperficie(BaseModel):
+    ancho: float = Field(
+        description="Ancho de la pared rectangular en metros."
+    )
+    alto: float = Field(
+        description="Alto de la pared rectangular en metros."
+    )
+
+
+@tool(args_schema=ArgumentosSuperficie)
+
 def calcular_superficie(ancho: float, alto: float) -> str:
     """Calcula la superficie de una pared rectangular en metros cuadrados.
     Úsala cuando el usuario proporcione ancho y alto en metros.
@@ -65,7 +81,6 @@ def calcular_superficie(ancho: float, alto: float) -> str:
 # Prepara el agente con las dos herramientas disponibles.
 def construir_agente(modelo):
     herramientas = [consultar_oficio, calcular_superficie]
-
     prompt = ChatPromptTemplate.from_messages([
         (
             "system",
@@ -76,8 +91,18 @@ def construir_agente(modelo):
             "No inventes precios, disponibilidad ni nombres de trabajadores. "
             "Responde brevemente y utiliza las herramientas cuando corresponda.",
         ),
+
+        # Bloque 21: estructura anterior, conservada como referencia.
+        # ("human", "{entrada}"),
+        # MessagesPlaceholder("agent_scratchpad"),
+
+        # Bloque 22: historial de las interacciones anteriores.
+        MessagesPlaceholder("chat_history"),
+
+        # Mensaje actual del usuario.
         ("human", "{entrada}"),
-        # LangChain coloca aquí las acciones y resultados intermedios.
+
+        # Acciones y resultados de la interacción actual.
         MessagesPlaceholder("agent_scratchpad"),
     ])
 
@@ -91,6 +116,45 @@ def construir_agente(modelo):
         agent=agente,
         tools=herramientas,
         return_intermediate_steps=True,
+    )
+# Bloque 22: conserva las conversaciones mientras el programa está abierto.
+historiales = {}
+
+
+def obtener_historial(session_id: str):
+    # Crea un historial vacío cuando la sesión todavía no existe.
+    if session_id not in historiales:
+        historiales[session_id] = InMemoryChatMessageHistory()
+
+    # Devuelve únicamente el historial de la sesión solicitada.
+    return historiales[session_id]
+
+# Convierte los bloques de Gemini en texto antes de guardar el historial.
+def normalizar_respuesta(resultado):
+    salida = resultado["output"]
+
+    if isinstance(salida, list):
+        salida = "\n".join(
+            bloque["text"]
+            for bloque in salida
+            if isinstance(bloque, dict) and bloque.get("type") == "text"
+        )
+
+    # Conserva los demás datos, incluidas las herramientas utilizadas.
+    return {**resultado, "output": salida}
+
+
+# Conecta el agente existente con el historial de cada sesión.
+def construir_agente_con_memoria(modelo):
+    ejecutor = construir_agente(modelo)
+    agente_normalizado = ejecutor | RunnableLambda(normalizar_respuesta)
+
+    return RunnableWithMessageHistory(
+        agente_normalizado,
+        obtener_historial,
+        input_messages_key="entrada",
+        history_messages_key="chat_history",
+        output_messages_key="output",
     )
 
 
@@ -106,12 +170,21 @@ def main():
         model="gemini-3.5-flash-lite",
         api_key=clave.strip(),
     )
+    # Bloque 21: agente sin memoria.
+    #ejecutor = construir_agente(modelo)
+    #entrada = input("Escribe tu consulta: ")
+    #resultado = ejecutor.invoke({"entrada": entrada})
+    # Bloque 22: agente con historial por sesión.
+    ejecutor = construir_agente_con_memoria(modelo)
+    config = {"configurable": {"session_id": "sesion_1"}}
 
-    ejecutor = construir_agente(modelo)
     entrada = input("Escribe tu consulta: ")
 
-    resultado = ejecutor.invoke({"entrada": entrada})
+    # Bloque 21: consulta independiente.
+    # resultado = ejecutor.invoke({"entrada": entrada})
 
+    # Bloque 22: consulta asociada a una sesión.
+    resultado = ejecutor.invoke({"entrada": entrada}, config)
     print("\nRespuesta:")
     salida = resultado["output"]
 

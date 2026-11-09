@@ -768,3 +768,45 @@ Muestra la respuesta final y las herramientas utilizadas mediante
 
 En ambas ejecuciones se verificó la herramienta elegida,
 sus argumentos y el resultado devuelto.
+## Bloque 22: herramientas estructuradas y memoria
+
+Se amplió `src/agente_con_herramientas.py` con:
+
+- `ArgumentosSuperficie`, definido mediante Pydantic y conectado
+  a la herramienta con `args_schema`, para describir ancho y alto.
+- `chat_history` en el prompt, antes del mensaje del usuario.
+- `RunnableWithMessageHistory` para incorporar mensajes anteriores.
+- Historiales independientes mediante `session_id`.
+- Normalización de la respuesta de Gemini a texto antes de guardarla.
+
+### Comprobaciones realizadas
+
+| Comprobación | Resultado observado |
+|---|---|
+| Invocación directa de la herramienta con ancho 4 y alto 2,5 | 10 m², sin consultar a Gemini. |
+| Primer turno de una sesión: pared de 4 × 2,5 metros | 10 m² y dos mensajes guardados. |
+| Segundo turno: duplicar el ancho manteniendo la altura | Utilizó 8 × 2,5 metros; devolvió 20 m² y quedaron cuatro mensajes. |
+| Consulta desde otra sesión sobre las medidas anteriores | Indicó que no se habían proporcionado medidas en esa conversación. |
+
+Se verificó que los historiales de las dos sesiones fueran objetos
+distintos y contuvieran dos mensajes cada uno.
+
+Las pruebas de conversación se realizaron con llamadas consecutivas
+a `construir_agente_con_memoria(modelo)` y su ejecutor, dentro del
+mismo proceso, pasando la configuración correspondiente a cada sesión.
+
+### Alcance de la memoria
+
+El historial se conserva únicamente mientras el proceso permanece
+abierto. No se guarda en archivos ni en una base de datos.
+
+La ejecución interactiva del módulo sigue solicitando una sola
+consulta por ejecución; las comprobaciones de varios turnos se
+realizaron desde un script en la terminal.
+
+Reenviar el historial aumenta los tokens de entrada de las consultas.
+
+Durante las pruebas aparecieron avisos de deprecación de
+`RunnableWithMessageHistory` e `InMemoryChatMessageHistory`.
+Las ejecuciones finalizaron correctamente utilizando el mecanismo
+presentado en el curso.
