@@ -810,3 +810,30 @@ Durante las pruebas aparecieron avisos de deprecación de
 `RunnableWithMessageHistory` e `InMemoryChatMessageHistory`.
 Las ejecuciones finalizaron correctamente utilizando el mecanismo
 presentado en el curso.
+## Bloque 23: trazas y límites de autonomía
+
+El agente guarda cada interacción completada en
+`trazas_agente.jsonl`, incluyendo fecha UTC, sesión, entrada,
+herramientas utilizadas, argumentos, observaciones y respuesta final.
+Los registros nuevos se agregan sin borrar los anteriores.
+
+- [Límites de autonomía del agente](docs/limites_autonomia_agente.md)
+- [Trazas registradas](trazas_agente.jsonl)
+
+Se verificaron dos consultas reales: una al catálogo de oficios
+y otra al cálculo de superficie. Ambas utilizaron la herramienta
+correspondiente y sus respuestas coincidieron con los resultados.
+
+Las dos herramientas son de riesgo bajo: consultan o calculan.
+El documento justifica por qué no requieren aprobación humana
+y establece cómo revisar las trazas y actuar ante fallos.
+
+Para ejecutar desde la raíz del repositorio, con el entorno
+virtual activo y `API_KEY` configurada en `.env`:
+
+```bash
+python -m src.agente_con_herramientas
+```
+
+Este comando consulta a Gemini, consume cuota y agrega una traza
+si la interacción termina correctamente.

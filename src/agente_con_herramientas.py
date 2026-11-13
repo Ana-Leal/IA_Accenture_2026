@@ -8,6 +8,9 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
 # Bloque 22: guarda los mensajes de cada conversación.
 from langchain_core.chat_history import InMemoryChatMessageHistory
+# Bloque 23: permite guardar registros JSON con fecha y hora.
+import json
+from datetime import datetime, timezone
 # Conecta el historial con el agente.
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_classic.agents import (
@@ -157,6 +160,37 @@ def construir_agente_con_memoria(modelo):
         output_messages_key="output",
     )
 
+# Bloque 23: guarda una interacción del agente para revisarla después.
+def registrar_traza(
+    session_id: str,
+    entrada: str,
+    resultado: dict,
+) -> None:
+    """Agrega una interacción al archivo trazas_agente.jsonl."""
+    registro = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "session_id": session_id,
+        "entrada": entrada,
+        "acciones": [
+            {
+                "herramienta": accion.tool,
+                "argumentos": accion.tool_input,
+                "observacion": observacion,
+            }
+            for accion, observacion in resultado.get(
+                "intermediate_steps", []
+            )
+        ],
+        # Nuestro agente ya devuelve la respuesta normalizada como texto.
+        "respuesta_final": resultado["output"],
+    }
+
+    # El modo "a" agrega registros sin borrar los anteriores.
+    with open("trazas_agente.jsonl", "a", encoding="utf-8") as archivo:
+        archivo.write(
+            json.dumps(registro, ensure_ascii=False) + "\n"
+        )
+
 
 def main():
     # Reutiliza API_KEY del archivo .env del proyecto.
@@ -185,6 +219,12 @@ def main():
 
     # Bloque 22: consulta asociada a una sesión.
     resultado = ejecutor.invoke({"entrada": entrada}, config)
+    # Guarda la consulta, las herramientas utilizadas y la respuesta.
+    registrar_traza(
+        session_id=config["configurable"]["session_id"],
+        entrada=entrada,
+        resultado=resultado,
+    )
     print("\nRespuesta:")
     salida = resultado["output"]
 
