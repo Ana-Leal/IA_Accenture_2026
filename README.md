@@ -837,3 +837,44 @@ python -m src.agente_con_herramientas
 
 Este comando consulta a Gemini, consume cuota y agrega una traza
 si la interacción termina correctamente.
+## Bloque 24: indexación del corpus y persistencia en Chroma
+
+El archivo `indexar_corpus.py` contiene cinco documentos cortos sobre
+el cliente modular, las credenciales, los costos, las herramientas
+del agente y las pruebas unitarias.
+
+Utiliza `RecursiveCharacterTextSplitter` con fragmentos de hasta
+200 caracteres y un solapamiento de 30 caracteres. Se eligió el
+corte recursivo para respetar los límites entre párrafos y palabras.
+
+Los embeddings se generan con `models/gemini-embedding-001`.
+Chroma guarda el índice en `vectorstore/`, dentro de la colección
+`corpus_proyecto`.
+
+### Generar el índice
+
+Desde la raíz del proyecto, con el entorno virtual activo,
+las dependencias instaladas y `API_KEY` configurada en `.env`:
+
+```bash
+python -u indexar_corpus.py
+```
+
+Este comando realiza llamadas reales a la API y consume cuota.
+Debe ejecutarse una vez para crear el índice; repetirlo puede
+agregar fragmentos duplicados a la colección existente.
+
+### Comprobar la persistencia
+
+En un nuevo proceso de Python, desde la raíz del proyecto:
+
+```bash
+python -c "from langchain_chroma import Chroma; from indexar_corpus import DIRECTORIO_INDICE; indice = Chroma(collection_name='corpus_proyecto', persist_directory=str(DIRECTORIO_INDICE)); print('Fragmentos recuperados del disco:', indice._collection.count())"
+```
+
+Resultado verificado: cinco documentos, cinco fragmentos generados
+y cinco fragmentos recuperados del disco.
+
+La comprobación no vuelve a generar embeddings ni consume cuota.
+La carpeta `vectorstore/` está excluida mediante `.gitignore`;
+el índice se reconstruye ejecutando el script.
