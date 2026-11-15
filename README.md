@@ -878,3 +878,47 @@ y cinco fragmentos recuperados del disco.
 La comprobación no vuelve a generar embeddings ni consume cuota.
 La carpeta `vectorstore/` está excluida mediante `.gitignore`;
 el índice se reconstruye ejecutando el script.
+## Bloque 26: recuperación semántica y prompt con citas
+
+El corpus está en `docs/catalogo_servicios.md` y contiene información
+sobre cuatro oficios y el alcance de la orientación.
+
+`indexar_corpus.py` lee sus cinco secciones y las divide en fragmentos.
+La ejecución registrada generó y guardó ocho fragmentos en Chroma,
+con identificadores predecibles y el archivo Markdown como fuente.
+
+`recuperacion.py` abre el índice existente y recupera tres fragmentos
+por pregunta. Construye un prompt con contexto numerado y un mapa
+que relaciona las citas con su fuente.
+
+El prompt indica responder únicamente con el contexto, citar las
+fuentes y reconocer cuando la información no alcanza.
+
+### Ejecutar la recuperación
+
+Desde la raíz del proyecto, con el entorno virtual activo,
+`API_KEY` configurada y el índice generado:
+
+```bash
+python -u recuperacion.py
+```
+
+Este comando utiliza la API para obtener el embedding de la pregunta.
+Muestra el prompt y el mapa de citas; no genera la respuesta final
+ni vuelve a indexar el corpus.
+
+### Comprobaciones realizadas
+
+- Una consulta sobre reparar un mueble recuperó Carpintero primero.
+- Una consulta sobre una llave que gotea recuperó Gasfíter primero.
+- Al enviar el prompt al cliente existente, Gemini recomendó un
+  gasfíter con la cita [1]. Se comprobó que el fragmento citado
+  corresponde al catálogo y respalda la respuesta.
+- Ante una consulta sobre precios y disponibilidad en Valdivia,
+  Gemini reconoció que el contexto no permitía responder.
+
+Las respuestas finales se probaron mediante `consultar_modelo`
+de `src/cliente.py`, usando el prompt construido por la recuperación.
+
+Estos resultados corresponden a las consultas realizadas y no
+garantizan el mismo comportamiento para cualquier entrada.
