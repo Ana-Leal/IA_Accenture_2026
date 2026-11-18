@@ -922,3 +922,60 @@ de `src/cliente.py`, usando el prompt construido por la recuperación.
 
 Estos resultados corresponden a las consultas realizadas y no
 garantizan el mismo comportamiento para cualquier entrada.
+## Bloque 27: evaluación de la recuperación
+
+`evaluacion_recuperacion.py` evalúa ocho preguntas contra el índice
+del catálogo de oficios y servicios.
+
+Los fragmentos relevantes se etiquetaron manualmente leyendo el
+corpus antes de ejecutar la evaluación. Se incluyeron consultas
+sobre distintos oficios, consultas con varios fragmentos relevantes
+y una pregunta fuera del catálogo.
+
+### Ejecutar la evaluación
+
+Desde la raíz del proyecto, con el entorno virtual activo,
+`API_KEY` configurada y el índice del bloque 26 generado:
+
+```bash
+python -u evaluacion_recuperacion.py --k 3
+python -u evaluacion_recuperacion.py --k 5
+```
+
+La evaluación utiliza la API de embeddings para las búsquedas.
+No genera respuestas con Gemini ni vuelve a indexar el corpus.
+
+### Resultados registrados
+
+| Configuración | Precisión promedio | Recall promedio |
+|---|---:|---:|
+| k=3, primera ejecución | 0.417 | 1.000 |
+| k=3, segunda ejecución | 0.417 | 1.000 |
+| k=5 | 0.250 | 1.000 |
+
+Las dos ejecuciones con k=3 devolvieron los mismos identificadores,
+en el mismo orden, y las mismas métricas.
+
+Se conserva k=3: en estos casos recuperó todos los fragmentos
+etiquetados como relevantes. Aumentar a k=5 agregó fragmentos
+no relevantes sin mejorar el recall.
+
+La pregunta sobre la capital de Noruega no tiene respuesta en el
+catálogo. Su precisión es cero y su recall figura como n/a.
+Este caso se incluye en el promedio de precisión y se excluye
+del promedio de recall.
+
+### Registros
+
+- [Primera ejecución con k=3](resultados_evaluacion.txt).
+- [Segunda ejecución con k=3](resultados_evaluacion_20261117_205538_033698_k3.txt).
+- [Ejecución con k=5](resultados_evaluacion_20261117_210128_009220_k5.txt).
+
+Cada registro conserva fecha, configuración, preguntas,
+identificadores recuperados y relevantes, métricas y promedios.
+Las siguientes ejecuciones generan archivos nuevos para conservar
+los resultados anteriores.
+
+Las métricas evalúan la recuperación, no la calidad de las respuestas
+generadas. Los resultados corresponden a estas ocho preguntas y sus
+etiquetas; no garantizan el mismo comportamiento para otras consultas.

@@ -1,0 +1,31 @@
+Fecha: 2026-11-17T21:01:28
+Configuracion: k=5, chunk_size=200, chunk_overlap=30
+Corpus: docs/catalogo_servicios.md
+
+Precision | Recall | Pregunta
+0.200 | 1.000 | La llave del lavaplatos gotea. ¿Qué oficio atiende la grifería?
+  Recuperados: ['doc0', 'doc5', 'doc4', 'doc1', 'doc2']
+  Relevantes: ['doc0']
+0.200 | 1.000 | Necesito reparar un mueble de madera. ¿A qué oficio corresponde?
+  Recuperados: ['doc1', 'doc5', 'doc4', 'doc2', 'doc0']
+  Relevantes: ['doc1']
+0.200 | 1.000 | ¿Quién puede revisar y reparar la instalación eléctrica?
+  Recuperados: ['doc2', 'doc5', 'doc4', 'doc6', 'doc0']
+  Relevantes: ['doc2']
+0.200 | 1.000 | Quiero preparar y pintar las paredes y el cielo. ¿Qué oficio necesito?
+  Recuperados: ['doc3', 'doc4', 'doc5', 'doc2', 'doc1']
+  Relevantes: ['doc3']
+0.400 | 1.000 | Necesito reparar una tubería y un mueble de madera. ¿Qué oficios atienden esos trabajos?
+  Recuperados: ['doc1', 'doc0', 'doc5', 'doc4', 'doc2']
+  Relevantes: ['doc0', 'doc1']
+0.400 | 1.000 | ¿La aplicación orienta sobre el trabajador que necesito y pide aclaraciones si mi descripción es insuficiente?
+  Recuperados: ['doc4', 'doc6', 'doc5', 'doc7', 'doc2']
+  Relevantes: ['doc4', 'doc5']
+0.400 | 1.000 | ¿El catálogo contiene precios y disponibilidad de trabajadores? ¿Qué debe hacer la aplicación si no tiene información para responder?
+  Recuperados: ['doc6', 'doc7', 'doc4', 'doc5', 'doc1']
+  Relevantes: ['doc6', 'doc7']
+0.000 | n/a | ¿Cuál es la capital de Noruega?
+  Recuperados: ['doc6', 'doc5', 'doc4', 'doc7', 'doc2']
+  Relevantes: []
+
+Promedios: precision=0.250, recall=1.000
