@@ -979,3 +979,75 @@ los resultados anteriores.
 Las métricas evalúan la recuperación, no la calidad de las respuestas
 generadas. Los resultados corresponden a estas ocho preguntas y sus
 etiquetas; no garantizan el mismo comportamiento para otras consultas.
+## Bloque 28: latencia y consumo del flujo RAG
+
+El archivo `registro_rag.py` ejecuta consultas reales sobre el catálogo
+de servicios y mide tres etapas por separado:
+
+- `embed_query`: generación del embedding de la pregunta.
+- `busqueda_vectorial`: búsqueda local en Chroma usando ese vector.
+- `generacion`: generación de la respuesta con el contexto recuperado.
+
+Reutiliza el prompt y el formato de citas de `recuperacion.py`.
+No vuelve a indexar el catálogo.
+
+### Comprobación previa
+
+```bash
+python preflight.py
+```
+
+Comprueba que la carpeta `vectorstore/` exista y esté incluida
+en `.gitignore`. No realiza llamadas a la API.
+
+### Ejecutar una consulta
+
+Desde la raíz del repositorio, con el entorno virtual activo
+y `API_KEY` configurada en `.env`:
+
+```bash
+python -u registro_rag.py --k 3
+```
+
+Para comparar la misma pregunta recuperando seis fragmentos:
+
+```bash
+python -u registro_rag.py --k 6
+```
+
+Estos comandos realizan llamadas reales a las APIs de embeddings
+y generación, y consumen cuota.
+
+### Resultados registrados
+
+| Consulta | k | Embedding (ms) | Búsqueda (ms) | Generación (ms) | Total medido (ms) | Tokens de entrada | Tokens de salida |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Grifería | 3 | 1174,48 | 13,44 | 1117,97 | 2305,89 | 208 | 38 |
+| Mueble de madera | 3 | 1263,95 | 13,15 | 1803,33 | 3080,43 | 172 | 11 |
+| Tubería y mueble | 3 | 1224,33 | 14,04 | 1642,01 | 2880,38 | 199 | 63 |
+| Tubería y mueble | 6 | 1129,31 | 51,86 | 1660,52 | 2841,69 | 270 | 60 |
+
+Para la misma pregunta sobre tubería y mueble, aumentar k de 3 a 6
+elevó los tokens de entrada de 199 a 270: un aumento del 35,7 %.
+
+La búsqueda local fue la etapa más rápida en las cuatro consultas.
+La generación fue la más lenta en tres; en la primera, el embedding
+tardó ligeramente más.
+
+Los tiempos varían entre ejecuciones. Estas mediciones no permiten
+concluir que k=6 sea más rápido que k=3.
+
+### Registro y alcance de las mediciones
+
+[Ver registros de las consultas](registros_latencia_costo.jsonl).
+
+Cada ejecución agrega un objeto JSON en una nueva línea, sin borrar
+los anteriores. Incluye fecha UTC, pregunta, k, tiempos y tokens
+reales reportados por el modelo.
+
+El tiempo total registrado es la suma de las tres etapas medidas;
+no incluye la preparación inicial de los clientes y del índice.
+
+Los tokens registrados corresponden a la generación, no al consumo
+de la API de embeddings. Son datos para calcular el costo:
+el archivo todavía no registra importes monetarios.
